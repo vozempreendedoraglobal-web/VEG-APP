@@ -613,7 +613,13 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
         <div class="fld"><label>Horário *</label><select id="agHora" required><option value="">Seleccionar...</option><option>08:00</option><option>09:00</option><option>10:00</option><option>11:00</option><option>13:00</option><option>14:00</option><option>15:00</option><option>16:00</option><option>17:00</option></select></div>
       </div>
       <div class="fld"><label>Local / preferência</label><input id="agLocal" placeholder="Ex.: Presencial na VEG (Luanda) ou endereço do cliente"></div>
+      <div class="frow">
+        <div class="fld"><label>E-mail para notificações</label><input id="agEmail" type="email" placeholder="Recebe actualizações do agendamento por e-mail"></div>
+        <div class="fld"><label>WhatsApp para notificações</label><input id="agWpp" placeholder="+244 9XX XXX XXX"></div>
+      </div>
       <div class="fld"><label>Observações</label><textarea id="agObs" rows="2" placeholder="Detalhes que o prestador deve saber..."></textarea></div>
+      <div class="fld"><label>Parceiro preferencial (opcional)</label><select id="agPartner"></select></div>
+      <p style="font-size:.76rem;color:var(--mut);margin:-6px 0 12px">🛡️ Todo agendamento passa por validação administrativa VEG antes de ser encaminhado ao parceiro.</p>
       <button class="btn btn-gold" type="submit">📅 Confirmar Agendamento</button>
     </form>
   </div>
@@ -708,6 +714,10 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
         <div class="fld"><label>Categoria *</label><select id="ptCat" required><option value="">Seleccionar...</option><option>Transportes</option><option>Saúde</option><option>Educação</option><option>Comércio</option><option>Tecnologia</option><option>Turismo & Hotelaria</option><option>Agricultura</option><option>Eventos</option><option>Comunicação</option><option>Serviços Profissionais</option></select></div>
         <div class="fld"><label>Província *</label><select id="ptProv"></select></div>
         <div class="fld"><label>WhatsApp *</label><input id="ptWpp" required placeholder="+244 9XX XXX XXX"></div>
+      </div>
+      <div class="frow">
+        <div class="fld"><label>E-mail (institucional)</label><input id="ptEmail" type="email" placeholder="empresa@exemplo.com"></div>
+        <div class="fld"><label>Website / Rede social</label><input id="ptSite" placeholder="https://… ou @perfil"></div>
       </div>
       <div class="fld"><label>Descrição da actividade e experiência *</label><textarea id="ptDesc" rows="3" required placeholder="O que faz, há quanto tempo, clientes ou projectos de referência..."></textarea></div>
       <button class="btn btn-gold" type="submit">📩 Submeter Candidatura</button>
@@ -973,7 +983,7 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('campanhas')">📣 Campanhas p/ aprovar</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('parceiros')">🤝 Parceiros p/ análise</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('utilizadores')">👥 Utilizadores</span>
-      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('tickets')">🎫 Tickets</span>
+      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('tickets')">🎫 Tickets</span>       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('agendamentos')">📅 Agendamentos</span>       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('liquidacoes')">💰 Liquidações</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('financeiro')">💳 Finanças</span>       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('saldo')">💰 Saldo &amp; Preços</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('conteudos')">📄 Conteúdos</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('config')">⚙️ Configurações</span>
@@ -1065,6 +1075,11 @@ function saveDB(){localStorage.setItem(DB_KEY,JSON.stringify(db));}
 loadDB();
 /* FASE 1: rede de parceiros recomeça vazia — remove parceiros-semente antigos */
 if(Array.isArray(db.partners)){db.partners=db.partners.filter(p=>!['pt1','pt2','pt3'].includes(p.id));saveDB();}
+/* FASE 3: normalizar estados antigos de agendamentos + garantir histórico */
+const _stMap={'Solicitado':'solicitado','Concluído':'concluido','Cancelado':'cancelado'};
+db.appts.forEach(a=>{if(_stMap[a.status])a.status=_stMap[a.status];if(!Array.isArray(a.hist))a.hist=[{ts:a.created||Date.now(),actor:'sistema',action:'Agendamento registado',note:''}];});
+try{checkReminders();}catch(e){}
+if(!db.settlements)db.settlements=[];
 /* FASE 2: expiração automática de acordos de parceria */
 const _today=new Date().toISOString().slice(0,10);
 db.partners.forEach(p=>{if(p.status==='ativo'&&p.validUntil&&p.validUntil<_today){p.status='expirado';p.verified=false;if(p.userId)notify(p.userId,'⌛ O acordo de parceria expirou. Contacte a VEG para renovação.');logAction('Parceria expirada (automático)',p.name);}});
@@ -1754,14 +1769,201 @@ function createCampaignExec(e){const u=currentUser();
 
 /* ================= AGENDAMENTOS ================= */
 function pickAgenda(v){$('#agServ').value=v;document.querySelector('#agenda form').scrollIntoView({behavior:'smooth'});}
-function renderAgenda(){const u=currentUser();const rows=u?db.appts.filter(a=>a.userId===u.id).map(a=>'<tr><td>'+esc(a.serv)+'</td><td>'+esc(a.date)+' '+esc(a.time)+'</td><td>'+esc(a.local||'—')+'</td><td><span class="bdg '+(a.status==='Concluído'?'b-g':a.status==='Cancelado'?'b-r':'b-p')+'">'+esc(a.status)+'</span></td></tr>').join(''):'';
- $('#agTable').innerHTML='<tr><th>Serviço</th><th>Data / Hora</th><th>Local</th><th>Estado</th></tr>'+(rows||'<tr><td colspan="4" style="text-align:center;color:var(--mut)">Sem agendamentos.</td></tr>');}
-function createAppt(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();
- db.appts.push({id:uid(),userId:u.id,serv:$('#agServ').value,date:$('#agData').value,time:$('#agHora').value,local:$('#agLocal').value.trim(),obs:$('#agObs').value.trim(),status:'Solicitado',created:Date.now()});
- notify(u.id,'📅 Agendamento de «'+$('#agServ').value+'» solicitado para '+$('#agData').value+' às '+$('#agHora').value+'. Receberá lembrete após confirmação.');logAction('Agendamento solicitado',$('#agServ').value);pushData({tipo:'agendamento',servico:$('#agServ').value,data:$('#agData').value});saveDB();e.target.reset();renderAgenda();toast('Agendamento registado. Estado: Solicitado.','ok');}
 
-/* ================= VEG MAP ================= */
-const PROV_CAPITALS={'Luanda':[-8.8383,13.2344],'Benguela':[-12.5763,13.4055],'Huíla':[-14.9171,13.4925],'Huambo':[-12.7761,15.7392],'Cabinda':[-5.56,12.19],'Malanje':[-9.54,16.34],'Namibe':[-15.2,12.15],'Zaire':[-6.27,14.25],'Uíge':[-7.62,15.06],'Bengo':[-8.8,13.37],'Cuanza Norte':[-9.02,14.91],'Cuanza Sul':[-11.78,13.85],'Cunene':[-16.28,14.23],'Cuando Cubango':[-15.67,19.0],'Lunda Norte':[-9.03,19.0],'Lunda Sul':[-10.63,19.63],'Moxico':[-13.44,20.29],'Bié':[-12.39,16.94]};
+/* ===== FASE 3: Central de Agendamentos — máquina de estados, fila admin, histórico processual ===== */
+let adApFilter='todos';
+const APPT_STATUS={solicitado:'Solicitado',em_validacao:'Em validação',validado:'Validado',rejeitado:'Rejeitado',encaminhado:'Encaminhado',orcamentado:'Orçamentado',confirmado_cliente:'Confirmado (cliente)',confirmado_parceiro:'Confirmado (parceiro)',concluido:'Concluído',cancelado:'Cancelado',expirado:'Expirado',reagendado:'Reagendado',noshow:'Não compareceu'};
+function apptBadge(st){const map={solicitado:['b-p','Solicitado'],em_validacao:['b-p','Em validação'],validado:['b-n','Validado'],rejeitado:['b-r','Rejeitado'],encaminhado:['b-n','Encaminhado'],orcamentado:['b-gold','Orçamentado'],confirmado_cliente:['b-n','Confirmado (cliente)'],confirmado_parceiro:['b-n','Confirmado (parceiro)'],concluido:['b-g','Concluído'],cancelado:['b-r','Cancelado'],expirado:['b-grey','Expirado'],reagendado:['b-gold','Reagendado'],noshow:['b-r','Não compareceu']};const m=map[st]||map.solicitado;return '<span class="bdg '+m[0]+'">'+m[1]+'</span>';}
+const APPT_TRANSITIONS={solicitado:['em_validacao','rejeitado','cancelado'],em_validacao:['validado','rejeitado','cancelado'],validado:['encaminhado','cancelado','reagendado'],encaminhado:['orcamentado','expirado','cancelado'],orcamentado:['confirmado_cliente','cancelado'],confirmado_cliente:['confirmado_parceiro','cancelado','noshow'],confirmado_parceiro:['concluido','noshow','cancelado'],reagendado:['encaminhado','cancelado'],rejeitado:['solicitado'],concluido:[],cancelado:['solicitado'],expirado:['solicitado'],noshow:['solicitado']};
+function apptHist(a,actor,action,note){if(!Array.isArray(a.hist))a.hist=[];a.hist.push({ts:Date.now(),actor:actor,action:action,note:note||''});}
+function apptPartnerName(a){const p=a.partnerId?db.partners.find(x=>x.id===a.partnerId):null;return p?p.name:'—';}
+function adAppts(box,head){
+ const counts={};db.appts.forEach(a=>counts[a.status]=(counts[a.status]||0)+1);
+ const chips=[['todos','Todos'],['solicitado','Solicitados'],['em_validacao','Em validação'],['validado','Validados'],['encaminhado','Encaminhados'],['orcamentado','Orçamentados'],['confirmado_parceiro','Confirmados'],['concluido','Concluídos'],['cancelado','Cancelados'],['rejeitado','Rejeitados']];
+ const list=db.appts.filter(a=>adApFilter==='todos'||a.status===adApFilter).sort((a,b)=>b.created-a.created);
+ const rows=list.map(a=>{
+  const u=db.users.find(x=>x.id===a.userId);
+  const A=[];
+  if(a.status==='solicitado'){A.push('<button class="btn btn-blue sm" onclick="setApptState(\''+a.id+'\',\'em_validacao\')">🔎 Iniciar validação</button>');A.push('<button class="btn btn-red sm" onclick="setApptState(\''+a.id+'\',\'rejeitado\')">✖ Rejeitar</button>');}
+  else if(a.status==='em_validacao'){A.push('<button class="btn btn-green sm" onclick="setApptState(\''+a.id+'\',\'validado\')">✔ Validar</button>');A.push('<button class="btn btn-red sm" onclick="setApptState(\''+a.id+'\',\'rejeitado\')">✖ Rejeitar</button>');}
+  else if(a.status==='validado'){A.push('<button class="btn btn-gold sm" onclick="setApptState(\''+a.id+'\',\'encaminhado\')">📤 Encaminhar</button>');A.push('<button class="btn btn-blue sm" onclick="setApptState(\''+a.id+'\',\'reagendado\')">📅 Reagendar</button>');}
+  else if(a.status==='encaminhado'){A.push('<button class="btn btn-gold sm" onclick="submitQuote(\''+a.id+'\')">💰 Registar orçamento</button>');A.push('<button class="btn btn-grey sm" onclick="setApptState(\''+a.id+'\',\'expirado\')">⌛ Expirar</button>');}
+  else if(a.status==='orcamentado'){A.push('<button class="btn btn-green sm" onclick="setApptState(\''+a.id+'\',\'confirmado_cliente\')">✔ Cliente confirmou</button>');}
+  else if(a.status==='confirmado_cliente'){if(!(a.pay&&a.pay.status==='pago')){A.push('<button class="btn btn-gold sm" onclick="markPayAdmin(\''+a.id+'\')">💳 Registar pagamento</button>');}else{A.push('<button class="btn btn-green sm" onclick="setApptState(\''+a.id+'\',\'confirmado_parceiro\')">✔ Parceiro confirmou</button>');}}
+  else if(a.status==='confirmado_cliente'&&(a.pay&&a.pay.status==='pago')){A.push('<button class="btn btn-red sm" onclick="setApptState(\''+a.id+'\',\'noshow\')">⚠ Não compareceu</button>');}
+  else if(a.status==='confirmado_parceiro'){A.push('<button class="btn btn-gold sm" onclick="setApptState(\''+a.id+'\',\'concluido\')">🏁 Concluir</button>');A.push('<button class="btn btn-red sm" onclick="setApptState(\''+a.id+'\',\'noshow\')">⚠ Não compareceu</button>');}
+  else if(a.status==='reagendado'){A.push('<button class="btn btn-gold sm" onclick="setApptState(\''+a.id+'\',\'encaminhado\')">📤 Encaminhar</button>');}
+  else if(['rejeitado','cancelado','expirado','noshow'].includes(a.status)){A.push('<button class="btn btn-blue sm" onclick="setApptState(\''+a.id+'\',\'solicitado\')">↻ Reabrir</button>');}
+  return '<tr><td><b>'+(u?esc(u.name):'—')+'</b><br><small>'+esc(u?(u.phone||u.email||''):'')+'</small>'+(a.cliEmail?'<br><small>✉ '+esc(a.cliEmail)+'</small>':'')+(a.cliWpp?'<br><small>📱 '+esc(a.cliWpp)+'</small>':'')+apptWppLink(a,'')+'</td><td>'+esc(a.serv)+'<br><small>'+esc((a.obs||'').slice(0,60))+'</small></td><td>'+esc(a.date)+'<br><small>'+esc(a.time)+'</small></td><td>'+esc(a.local||'—')+'</td><td>'+esc(apptPartnerName(a))+'</td><td>'+(apptBadge(a.status)||'')+(a.quote?'<br>'+payBadge(a):'')+'</td><td>'+((a.hist||[]).length)+'</td><td>'+A.join(' ')+'<br><button class="btn btn-grey sm" style="margin-top:4px" onclick="viewAppt(\''+a.id+'\')">👁 Detalhe/Histórico</button></td></tr>';
+ }).join('');
+ box.innerHTML=head('📅 Central de Agendamentos VEG')+
+ '<div class="notice">🛡️ <b>Validação administrativa obrigatória:</b> todo agendamento passa por análise VEG antes de ser encaminhado ao parceiro. Cada transição regista-se no histórico processual e notifica o cliente.</div>'+
+ '<div class="step">'+chips.map(c=>'<span'+(adApFilter===c[0]?' class="on"':'')+' onclick="adApFilter=\''+c[0]+'\';adminTab(\'agendamentos\')" style="cursor:pointer">'+c[1]+' ('+(c[0]==='todos'?db.appts.length:(counts[c[0]]||0))+')</span>').join('')+'</div>'+
+ '<div class="twrap"><table><tr><th>Cliente</th><th>Serviço</th><th>Data/Hora</th><th>Local</th><th>Parceiro</th><th>Estado</th><th>Hist.</th><th>Acções</th></tr>'+(rows||'<tr><td colspan="8" class="empty">Sem agendamentos neste estado.</td></tr>')+'</table></div>';
+}
+function viewAppt(id){const a=db.appts.find(x=>x.id===id);if(!a)return;const u=db.users.find(x=>x.id===a.userId);
+ const hist=(a.hist||[]).slice().reverse().map(h=>'<div class="kv"><span>'+new Date(h.ts).toLocaleString('pt-PT')+' · '+esc(h.actor)+'</span><b>'+esc(h.action)+(h.note?' — '+esc(h.note):'')+'</b></div>').join('')||'<div class="empty">Sem histórico.</div>';
+ modalT('📅 Agendamento — '+a.serv,
+ '<div class="kv"><span>Estado</span><b>'+(APPT_STATUS[a.status]||a.status)+'</b></div>'+
+ '<div class="kv"><span>Cliente</span><b>'+(u?esc(u.name)+' · '+esc(u.phone||u.email||''):'—')+'</b></div>'+
+ '<div class="frow"><div class="fld"><label>Data</label><input id="apDate" type="date" value="'+esc(a.date)+'"></div><div class="fld"><label>Hora</label><input id="apTime" value="'+esc(a.time)+'"></div></div>'+
+ '<div class="fld"><label>Parceiro responsável</label><select id="apPartner"><option value="">— sem parceiro —</option>'+db.partners.filter(partnerPublic).map(p=>'<option value="'+p.id+'"'+(p.id===a.partnerId?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select></div>'+
+ '<div class="kv"><span>Local</span><b>'+esc(a.local||'—')+'</b></div>'+
+ '<div class="kv"><span>Notificações externas</span><b>'+(a.cliEmail?'✉ '+esc(a.cliEmail):'')+(a.cliEmail&&a.cliWpp?' · ':'')+(a.cliWpp?'📱 '+esc(a.cliWpp):'')||'—'+'</b></div>'+
+ '<div class="kv"><span>Observações</span><b>'+esc(a.obs||'—')+'</b></div>'+(a.quote?'<div class="kv"><span>Orçamento</span><b>'+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz · válido até '+esc(a.quote.valid||'—')+'</b></div><div class="kv"><span>Detalhe</span><b>'+esc(a.quote.desc)+'</b></div>':'')+
+ '<h3 style="margin:14px 0 8px"><span class="dot"></span>Histórico processual</h3>'+hist+
+ '<button class="btn btn-gold" onclick="saveApptEdit(\''+a.id+'\')">💾 Guardar alterações</button>');
+}
+function saveApptEdit(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
+ a.date=$('#apDate').value||a.date;a.time=$('#apTime').value||a.time;a.partnerId=$('#apPartner').value||null;
+ apptHist(a,'admin','Dossiê editado (data/hora/parceiro)','');logAction('Agendamento editado (admin)',a.serv);saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());adminTab('agendamentos');renderAgenda();toast('Agendamento actualizado.','ok');}
+function setApptState(id,st){const a=db.appts.find(x=>x.id===id);if(!a)return;
+ const allowed=APPT_TRANSITIONS[a.status]||[];
+ if(!allowed.includes(st)){toast('Transição não permitida: '+(APPT_STATUS[a.status]||a.status)+' → '+(APPT_STATUS[st]||st),'er');return;}
+ let reason='';
+ if(st==='rejeitado'||st==='cancelado'){reason=prompt('Motivo (obrigatório — fica no histórico e na notificação):')||'';if(!reason.trim()){toast('É obrigatório indicar o motivo.','er');return;}}
+ if(st==='reagendado'){const nd=prompt('Nova data (AAAA-MM-DD):')||'';const nh=prompt('Nova hora (HH:MM):')||'';if(!nd||!nh){toast('Reagendamento cancelado: indique data e hora.','er');return;}a.date=nd;a.time=nh;}
+ if(st==='encaminhado'&&!a.partnerId){toast('Atribua primeiro um parceiro no Detalhe/Histórico.','er');return;}
+ if(st==='confirmado_parceiro'&&!(a.pay&&a.pay.status==='pago')){toast('Modelo A: confirme primeiro o pagamento do cliente (botão 💳 na fila).','er');return;}
+ a.status=st;apptHist(a,'admin',(APPT_STATUS[st]||st),reason);
+ if(st==='concluido')settleAppt(a);
+ if(['noshow','cancelado','rejeitado'].includes(st))refundAppt(a,reason);
+ const msgs={em_validacao:'📋 O seu agendamento («'+a.serv+'») entrou em validação pela equipa VEG.',validado:'✔ O seu agendamento («'+a.serv+'») foi VALIDADO pela VEG.',rejeitado:'✖ O seu agendamento («'+a.serv+'») foi rejeitado: '+reason,encaminhado:'📤 O seu agendamento («'+a.serv+'») foi encaminhado ao parceiro: '+apptPartnerName(a)+'.',orcamentado:'💰 O parceiro enviou o orçamento para o agendamento «'+a.serv+'».',confirmado_cliente:'✔ O cliente confirmou o agendamento «'+a.serv+'».',confirmado_parceiro:'✔ O parceiro confirmou: tudo pronto para «'+a.serv+'» em '+a.date+' às '+a.time+'.',concluido:'🏁 O agendamento «'+a.serv+'» foi CONCLUÍDO. Avalie o serviço na plataforma!',cancelado:'✖ O agendamento «'+a.serv+'» foi cancelado: '+reason,expirado:'⌛ O agendamento «'+a.serv+'» expirou sem resposta do parceiro. A VEG irá reencaminhar.',reagendado:'📅 O agendamento «'+a.serv+'» foi reagendado para '+a.date+' às '+a.time+'.',noshow:'⚠ O agendamento «'+a.serv+'» foi marcado como «não compareceu».'};
+ if(a.userId&&msgs[st])notify(a.userId,msgs[st]);
+ if(msgs[st])notifyApptEmail(a,msgs[st]);
+ const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;
+ if(pt&&pt.userId&&msgs[st]&&a.userId!==pt.userId)notify(pt.userId,msgs[st]);
+ logAction('Agendamento: '+(APPT_STATUS[a.status]||a.status)+' → '+(APPT_STATUS[st]||st)+(reason?' · '+reason.trim():''),a.serv);
+ saveDB();adminTab('agendamentos');renderAgenda();toast('Estado actualizado: '+(APPT_STATUS[st]||st),'ok');}
+/* ===== FASE 4: Motor de orçamento, 3 níveis de confirmação, lembretes automáticos ===== */
+
+/* ===== Notificação externa do agendamento: e-mail automático + WhatsApp (link rápido) ===== */
+function notifyApptEmail(a,msg){if(!a||!a.cliEmail)return;
+ try{if(typeof VEG_CONFIG!=='undefined'&&VEG_CONFIG.API_URL){
+  fetch(VEG_CONFIG.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'vegmail',payload:{destino:a.cliEmail,assunto:'VEG APP — Agendamento: '+a.serv,corpo:msg+'\n\n—\nServiço: '+a.serv+'\nData: '+a.date+' às '+a.time+'\nLocal: '+(a.local||'—')+'\nEstado: '+(APPT_STATUS[a.status]||a.status)+'\nParceiro: '+apptPartnerName(a)+'\n\nVEG — Voz Empreendedora Global'},meta:{app:'VEG_APP',v:VEG_CONFIG.APP_VERSION,at:Date.now()}})}).catch(function(){});}}catch(e){}}
+function apptWppLink(a,extra){if(!a||!a.cliWpp)return'';const num=(a.cliWpp||'').replace(/\D/g,'');if(!num)return'';const txt=encodeURIComponent('VEG APP — Agendamento «'+a.serv+'» ('+a.date+' às '+a.time+') — Estado: '+(APPT_STATUS[a.status]||a.status)+(extra?'. '+extra:''));return '<a class="btn btn-green sm" style="margin-top:3px" target="_blank" rel="noopener" href="https://wa.me/'+num+'?text='+txt+'">🟢 WhatsApp</a>';}
+
+
+/* ===== FASE 5: Pagamentos Modelo A — VEG centraliza · comissão 15% · reembolso em carteira ===== */
+const VEG_COMMISSION=0.15;
+function payBadge(a){if(!a||!a.pay)return'';if(a.pay.status==='pago')return '<span class="bdg b-g">✅ Pago · '+esc(a.pay.method||'')+'</span>';if(a.pay.status==='reembolsado')return '<span class="bdg b-gold">↩️ Reembolsado em carteira</span>';return '<span class="bdg b-p">💳 Pagamento pendente</span>';}
+function creditWallet(u,amount,concept){if(!u)return;const w=ensureWallet(u);w.balance=(w.balance||0)+amount;w.refunded=(w.refunded||0)+amount;w.tx=w.tx||[];w.tx.push({id:uid(),type:'credito',concept:concept,amount:amount,currency:'Kz',ts:Date.now()});w.ledger=w.ledger||[];w.ledger.push({ts:Date.now(),type:'credito',concept:concept,amount:amount});}
+function payInstructions(id){const a=db.appts.find(x=>x.id===id);if(!a||!a.quote)return;
+ modalT('💳 Pagamento do serviço — '+a.serv,
+ '<div class="kv"><span>Valor a pagar (total)</span><b style="color:var(--gold2);font-size:1.2rem">'+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz</b></div>'+
+ '<div class="notice">💰 Pague à <b>VEG — Voz Empreendedora Global</b> (garantia do serviço). Após o pagamento, a VEG confirma e o serviço fica garantido (Confirmação 2/3).</div>'+
+ '<div class="kv"><span>📱 Multicaixa Express</span><b>+244 921 636 353 (VEG)</b></div>'+
+ '<div class="kv"><span>🏦 Transferência bancária</span><b>IBAN VEG — solicite por WhatsApp</b></div>'+
+ '<div class="kv"><span>💳 TPA</span><b>No atendimento VEG</b></div>'+
+ '<div class="fld" style="margin-top:12px"><label>Referência do pagamento (opcional)</label><input id="payRef" placeholder="Nº de transação / comprovativo"></div>'+
+ '<button class="btn btn-green" onclick="notifyPaid(\''+a.id+'\')">✔ Já efectuei o pagamento</button> <button class="btn btn-grey" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove())">Fechar</button>');}
+function notifyPaid(id){const a=db.appts.find(x=>x.id===id);if(!a)return;a.pay=a.pay||{status:'pendente'};a.pay.refClient=$('#payRef').value.trim();a.pay.notified=true;apptHist(a,'cliente','Cliente indicou que pagou',a.pay.refClient||'');db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(ad=>notify(ad.id,'💳 Cliente indicou pagamento de '+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz para «'+a.serv+'»'+(a.pay.refClient?' · ref: '+a.pay.refClient:'')+'. Confirme o recebimento na Central de Agendamentos.'));logAction('Cliente indicou pagamento',a.serv);saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderAgenda();toast('Pagamento sinalizado. A VEG irá confirmar.','ok');}
+function markPayAdmin(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
+ modalT('💳 Confirmar recebimento — '+a.serv,
+ '<div class="kv"><span>Valor</span><b>'+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz</b></div>'+
+ (a.pay&&a.pay.refClient?'<div class="kv"><span>Ref. indicada pelo cliente</span><b>'+esc(a.pay.refClient)+'</b></div>':'')+
+ '<div class="fld"><label>Método de pagamento *</label><select id="pmMethod"><option>Multicaixa Express</option><option>Transferência bancária</option><option>TPA</option></select></div>'+
+ '<div class="fld"><label>Referência / comprovativo</label><input id="pmRef" placeholder="Nº de transação"></div>'+
+ '<button class="btn btn-green" onclick="savePayAdmin(\''+a.id+'\')">✔ Confirmar pagamento → Confirmação 2/3</button>');}
+function savePayAdmin(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
+ a.pay={status:'pago',method:$('#pmMethod').value,ref:$('#pmRef').value.trim(),ts:Date.now(),amount:a.quote.amount};
+ a.status='confirmado_parceiro';
+ apptHist(a,'admin','Pagamento confirmado ('+a.pay.method+')',Number(a.quote.amount).toLocaleString('pt-PT')+' Kz');
+ if(a.userId)notify(a.userId,'✅ Pagamento confirmado — Confirmação 2/3. O serviço «'+a.serv+'» está garantido para '+a.date+' às '+a.time+'.');
+ notifyApptEmail(a,'A VEG confirmou o recebimento de '+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz. O serviço está garantido.');
+ const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;
+ if(pt&&pt.userId&&pt.userId!==a.userId)notify(pt.userId,'✅ Serviço «'+a.serv+'» pago e garantido pela VEG. Data: '+a.date+' às '+a.time+'.');
+ logAction('Pagamento confirmado (admin)',a.serv+' — '+a.quote.amount+' Kz · '+a.pay.method);
+ pushData({tipo:'pagamento',servico:a.serv,valor:a.quote.amount,metodo:a.pay.method,ref:a.pay.ref||''});
+ saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());adminTab('agendamentos');renderAgenda();toast('Pagamento confirmado — Confirmação 2/3.','ok');}
+function settleAppt(a){if(!a.quote||!a.partnerId||!(a.pay&&a.pay.status==='pago'))return;const pt=db.partners.find(p=>p.id===a.partnerId);if(!pt)return;
+ db.settlements=db.settlements||[];
+ if(db.settlements.some(s=>s.apptId===a.id))return;
+ const gross=a.quote.amount,com=Math.round(gross*VEG_COMMISSION),net=gross-com;
+ db.settlements.push({id:uid(),apptId:a.id,partnerId:a.partnerId,partnerName:pt.name,serv:a.serv,gross:gross,commission:com,net:net,ts:Date.now(),status:'pendente'});
+ if(pt.userId)notify(pt.userId,'📄 Liquidação gerada: «'+a.serv+'» — bruto '+gross.toLocaleString('pt-PT')+' Kz − comissão VEG 15% = líquido '+net.toLocaleString('pt-PT')+' Kz. A VEG irá pagar.');
+ pushData({tipo:'liquidacao',servico:a.serv,parceiro:pt.name,bruto:gross,comissao:com,liquido:net});
+ logAction('Liquidação gerada',pt.name+' — líquido '+net+' Kz');}
+function refundAppt(a,reasonTxt){if(!a.pay||a.pay.status!=='pago'||!a.quote)return;const u=db.users.find(x=>x.id===a.userId);const amt=a.quote.amount;
+ creditWallet(u,amt,'Reembolso — agendamento '+a.serv);
+ a.pay.status='reembolsado';apptHist(a,'sistema','Reembolso em carteira VEG Saldo',amt.toLocaleString('pt-PT')+' Kz'+(reasonTxt?' — '+reasonTxt:''));
+ if(u)notify(u.id,'↩️ '+amt.toLocaleString('pt-PT')+' Kz creditados na sua carteira VEG Saldo (reembolso de «'+a.serv+'»).');
+ notifyApptEmail(a,'O valor de '+amt.toLocaleString('pt-PT')+' Kz foi creditado na sua carteira VEG Saldo (reembolso). Disponível para futuros serviços.');
+ logAction('Reembolso em carteira',a.serv+' — '+amt+' Kz');}
+function adSettlements(box,head){db.settlements=db.settlements||[];
+ const pend=(db.settlements.filter(s=>s.status==='pendente').reduce((t,s)=>t+s.net,0));
+ const rows=db.settlements.slice().sort((a,b)=>b.ts-a.ts).map(s=>'<tr><td><b>'+esc(s.partnerName)+'</b><br><small>'+esc(s.serv)+'</small></td><td>'+Number(s.gross).toLocaleString('pt-PT')+' Kz</td><td>'+Number(s.commission).toLocaleString('pt-PT')+' Kz (15%)</td><td><b>'+Number(s.net).toLocaleString('pt-PT')+' Kz</b></td><td>'+(s.status==='pago'?'<span class="bdg b-g">Pago</span>':'<span class="bdg b-p">Pendente</span>')+'</td><td>'+(s.status==='pendente'?'<button class="btn btn-gold sm" onclick="markSettled(\''+s.id+'\')">💸 Marcar como pago</button>':'—')+'</td></tr>').join('');
+ box.innerHTML=head('💰 Liquidações a Parceiros — comissão VEG 15%')+
+ '<div class="notice">💰 <b>Modelo A:</b> o cliente paga à VEG; a VEG paga ao parceiro o valor <b>líquido (bruto − 15%)</b>. Liquidações geram-se automaticamente ao concluir um serviço pago. <b>A pagar agora: '+Number(pend).toLocaleString('pt-PT')+' Kz</b></div>'+
+ '<div class="twrap"><table><tr><th>Parceiro / Serviço</th><th>Bruto</th><th>Comissão VEG</th><th>Líquido</th><th>Estado</th><th>Acção</th></tr>'+(rows||'<tr><td colspan="6" class="empty">Sem liquidações — conclua um serviço pago para gerar a primeira.</td></tr>')+'</table></div>';}
+function markSettled(id){const s=(db.settlements||[]).find(x=>x.id===id);if(!s)return;s.status='pago';s.paidAt=Date.now();
+ const pt=db.partners.find(p=>p.id===s.partnerId);if(pt&&pt.userId)notify(pt.userId,'💸 A VEG pagou '+Number(s.net).toLocaleString('pt-PT')+' Kz — liquidação «'+s.serv+'». Obrigado pela parceria.');
+ logAction('Liquidação paga pela VEG',s.partnerName+' — '+s.net+' Kz');saveDB();adminTab('liquidacoes');toast('Liquidação marcada como paga.','ok');}
+
+function confirmLevel(a){if(a.status==='concluido')return 3;if(a.status==='confirmado_parceiro')return 2;if(a.status==='confirmado_cliente')return 1;return 0;}
+function submitQuote(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
+ if(a.status!=='encaminhado'){toast('Só se orçamenta após encaminhar ao parceiro.','er');return;}
+ if(!a.partnerId){toast('Atribua primeiro um parceiro no Detalhe/Histórico.','er');return;}
+ modalT('💰 Registar orçamento — '+a.serv,
+ '<div class="frow"><div class="fld"><label>Valor (Kz) *</label><input id="qVal" type="number" min="0" step="any" placeholder="ex.: 45000"></div><div class="fld"><label>Orçamento válido até *</label><input id="qValid" type="date"></div></div>'+
+ '<div class="fld"><label>Detalhe do orçamento *</label><textarea id="qDesc" rows="3" placeholder="O que está incluído, prazos, condições..."></textarea></div>'+
+ '<button class="btn btn-gold" onclick="saveQuote(\''+a.id+'\')">📤 Enviar orçamento ao cliente</button>');}
+function saveQuote(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
+ const v=parseFloat($('#qVal').value);const d=$('#qDesc').value.trim();const vl=$('#qValid').value;
+ if(!v||v<=0||!d||!vl){toast('Preencha valor, validade e detalhe do orçamento.','er');return;}
+ a.quote={amount:v,desc:d,valid:vl,ts:Date.now()};a.status='orcamentado';
+ apptHist(a,'parceiro','Orçamento enviado',Number(v).toLocaleString('pt-PT')+' Kz — válido até '+vl);
+ if(a.userId)notify(a.userId,'💰 Recebeu um orçamento de '+Number(v).toLocaleString('pt-PT')+' Kz para «'+a.serv+'» (válido até '+vl+'). Aceite em Agendamentos → Ver orçamento.');
+ notifyApptEmail(a,'Recebeu um orçamento de '+Number(v).toLocaleString('pt-PT')+' Kz para o agendamento «'+a.serv+'», válido até '+vl+'. Entre na VEG APP → Agendamentos para aceitar ou recusar.');
+ const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;
+ if(pt&&pt.userId&&pt.userId!==a.userId)notify(pt.userId,'💰 Orçamento de '+Number(v).toLocaleString('pt-PT')+' Kz enviado ao cliente para «'+a.serv+'».');
+ logAction('Orçamento registado',a.serv+' — '+v+' Kz');saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());adminTab('agendamentos');renderAgenda();toast('Orçamento enviado ao cliente.','ok');}
+function viewQuote(id){const a=db.appts.find(x=>x.id===id);if(!a||!a.quote)return;
+ modalT('💰 Orçamento — '+a.serv,
+ '<div class="kv"><span>Parceiro</span><b>'+esc(apptPartnerName(a))+'</b></div>'+
+ '<div class="kv"><span>Serviço</span><b>'+esc(a.serv)+' · '+esc(a.date)+' às '+esc(a.time)+'</b></div>'+
+ '<div class="kv"><span>Valor</span><b style="color:var(--gold2);font-size:1.2rem">'+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz</b></div>'+
+ '<div class="kv"><span>Válido até</span><b>'+esc(a.quote.valid)+'</b></div>'+
+ '<div class="kv"><span>Incluído</span><b>'+esc(a.quote.desc)+'</b></div>'+
+ '<button class="btn btn-green" onclick="acceptQuote(\''+a.id+'\')">✔ Aceitar orçamento (Confirmação 1/3)</button> <button class="btn btn-red" onclick="declineQuote(\''+a.id+'\')">✖ Recusar</button>');}
+function acceptQuote(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
+ if(a.status!=='orcamentado'||!a.quote){toast('Este orçamento já não está disponível.','er');return;}
+ a.status='confirmado_cliente';apptHist(a,'cliente','Cliente aceitou o orçamento',Number(a.quote.amount).toLocaleString('pt-PT')+' Kz');
+ a.pay={status:'pendente'};
+ if(a.userId)notify(a.userId,'✔ Confirmação 1/3: orçamento aceite. A aguardar confirmação do parceiro.');
+ db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(ad=>notify(ad.id,'✔ Cliente aceitou o orçamento de «'+a.serv+'» ('+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz). Falta confirmação do parceiro.'));
+ const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;
+ if(pt&&pt.userId&&pt.userId!==a.userId)notify(pt.userId,'✔ O cliente aceitou o seu orçamento para «'+a.serv+'». Confirme a disponibilidade.');
+ logAction('Orçamento aceite pelo cliente',a.serv);saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderAgenda();toast('Orçamento aceite — Confirmação 1/3.','ok');payInstructions(a.id);}
+function declineQuote(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
+ const r=prompt('Motivo da recusa (fica no histórico):')||'';if(!r.trim()){toast('Indique o motivo da recusa.','er');return;}
+ a.status='encaminhado';apptHist(a,'cliente','Cliente recusou o orçamento',r);
+ db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(ad=>notify(ad.id,'✖ Cliente recusou o orçamento de «'+a.serv+'»: '+r));
+ const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;
+ if(pt&&pt.userId&&pt.userId!==a.userId)notify(pt.userId,'✖ O cliente recusou o orçamento de «'+a.serv+'» ('+r+'). Envie novo orçamento.');
+ logAction('Orçamento recusado pelo cliente',a.serv+' — '+r);saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderAgenda();toast('Orçamento recusado — o parceiro será notificado.','ok');}
+function checkReminders(){try{const t=new Date();const today=t.toISOString().slice(0,10);const tom=new Date(t.getTime()+86400000).toISOString().slice(0,10);let ch=false;
+ db.appts.forEach(a=>{if(a.status!=='confirmado_parceiro')return;
+  const cli=db.users.find(u=>u.id===a.userId);
+  if(a.date===tom&&!a.rem24){a.rem24=1;ch=true;if(a.userId)notify(a.userId,'🔔 Lembrete: amanhã, '+a.date+' às '+a.time+', tem o serviço «'+a.serv+'» com '+apptPartnerName(a)+'.');const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;if(pt&&pt.userId)notify(pt.userId,'🔔 Lembrete: amanhã presta o serviço «'+a.serv+'»'+(cli?' a '+cli.name:'')+'.');apptHist(a,'sistema','Lembrete 24h enviado','');}
+  if(a.date===today&&!a.remDay){a.remDay=1;ch=true;if(a.userId)notify(a.userId,'🔔 Hoje às '+a.time+': serviço «'+a.serv+'». Bom serviço!');const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;if(pt&&pt.userId)notify(pt.userId,'🔔 Hoje às '+a.time+': serviço «'+a.serv+'».');apptHist(a,'sistema','Lembrete do dia enviado','');}});
+ if(ch)saveDB();}catch(e){}}
+
+function renderAgenda(){const u=currentUser();
+ if(u&&$('#agEmail')&&!$('#agEmail').value&&u.email)$('#agEmail').value=u.email;
+ if(u&&$('#agWpp')&&!$('#agWpp').value&&(u.phone||u.whatsapp))$('#agWpp').value=u.phone||u.whatsapp;
+ if($('#agPartner')){const ps=db.partners.filter(partnerPublic);const cur=$('#agPartner').value;$('#agPartner').innerHTML='<option value="">Sem preferência — a VEG atribui o parceiro</option>'+ps.map(p=>'<option value="'+p.id+'"'+(p.id===cur?' selected':'')+'>'+esc(p.name)+' · '+esc(p.cat)+'</option>').join('');}
+ const lvl={0:'',1:'<br><small style="color:var(--blue)">Confirmação 1/3 — aguarda parceiro</small>',2:'<br><small style="color:var(--green)">Confirmação 2/3 — tudo confirmado</small>',3:'<br><small style="color:var(--green)">✔ Concluído (3/3)</small>'};
+ const rows=u?db.appts.filter(a=>a.userId===u.id).sort((a,b)=>b.created-a.created).map(a=>{const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;const act=a.status==='orcamentado'&&a.quote?'<button class="btn btn-gold sm" onclick="viewQuote(\''+a.id+'\')">💰 Ver orçamento</button>':(a.status==='confirmado_cliente'&&a.pay&&a.pay.status==='pendente'?'<button class="btn btn-green sm" onclick="payInstructions(\''+a.id+'\')">💳 Pagar</button>':'');return '<tr><td>'+esc(a.serv)+(pt?'<br><small>🤝 '+esc(pt.name)+'</small>':'')+'</td><td>'+esc(a.date)+' '+esc(a.time)+'</td><td>'+esc(a.local||'—')+'</td><td>'+(apptBadge(a.status)||'')+(lvl[confirmLevel(a)]||'')+(a.quote&&a.pay?'<br>'+payBadge(a):'')+'</td><td>'+act+'</td></tr>';}).join(''):'';
+ $('#agTable').innerHTML='<tr><th>Serviço / Parceiro</th><th>Data / Hora</th><th>Local</th><th>Estado / Confirmação</th><th>Orçamento</th></tr>'+(rows||'<tr><td colspan="5" style="text-align:center;color:var(--mut)">Sem agendamentos.</td></tr>');}
+
+function createAppt(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();
+ const rec={id:uid(),userId:u.id,serv:$('#agServ').value,date:$('#agData').value,time:$('#agHora').value,local:$('#agLocal').value.trim(),obs:$('#agObs').value.trim(),cliEmail:$('#agEmail').value.trim(),cliWpp:$('#agWpp').value.trim(),partnerId:($('#agPartner')&&$('#agPartner').value)||null,status:'solicitado',created:Date.now(),hist:[{ts:Date.now(),actor:'cliente',action:'Agendamento solicitado',note:''}]};
+ db.appts.push(rec);
+ notify(u.id,'📅 Agendamento solicitado: '+rec.serv+' em '+rec.date+' às '+rec.time+'. Será validado pela equipa VEG.');
+ db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(a=>notify(a.id,'📅 Novo agendamento para validação: '+rec.serv+' ('+rec.date+' '+rec.time+')'));
+ logAction('Agendamento criado',rec.serv);pushData({tipo:'agendamento',servico:rec.serv,data:rec.date,hora:rec.time,local:rec.local});saveDB();e.target.reset();renderAgenda();toast('Agendamento solicitado. Será validado pela equipa VEG.','ok');}
+
 function hashJitter(s){let h=7;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%997;return (h%100)/100;}
 function mapPoints(){
  const pts=[{name:'Sede VEG — Escritório Virtual',cat:'VEG · Sede',prov:'Luanda',phone:'+244 933 803 862',lat:-8.8383,lng:13.2344,whats:'244933803862',desc:'Voz Empreendedora Global — NIF 5002859726'}];
@@ -1816,7 +2018,7 @@ function partnerSearch(){
   (!q||p.name.toLowerCase().includes(q)||(p.desc||'').toLowerCase().includes(q)||(p.cat||'').toLowerCase().includes(q))&&
   (!c||p.cat===c)&&(!pv||p.province===pv));
  const grid=$('#ptGrid');if(!grid)return;
- grid.innerHTML=list.map(p=>'<div class="mkcard"><div class="img">🤝</div><div class="bd"><b>'+esc(p.name)+'</b> <span class="bdg b-gold" title="Entidade validada pela VEG — Voz Empreendedora Global">✔ Parceiro VEG Verificado</span><br><small>'+esc(p.cat)+' · '+esc(p.province)+'</small><small>'+esc((p.desc||'').slice(0,110))+((p.desc||'').length>110?'…':'')+'</small></div><div class="ft"><button class="btn btn-green sm" onclick="window.open(\'https://wa.me/'+esc((p.whatsapp||'').replace(/\D/g,''))+'\',\'_blank\')">💬 Contactar</button></div></div>').join('')
+ grid.innerHTML=list.map(p=>'<div class="mkcard"><div class="img">🤝</div><div class="bd"><b>'+esc(p.name)+'</b> <span class="bdg b-gold" title="Entidade validada pela VEG — Voz Empreendedora Global">✔ Parceiro VEG Verificado</span><br><small>'+esc(p.cat)+' · '+esc(p.province)+'</small><small>'+esc((p.desc||'').slice(0,110))+((p.desc||'').length>110?'…':'')+'</small></div><div class="ft"><button class="btn btn-green sm" onclick="window.open(\'https://wa.me/'+esc((p.whatsapp||'').replace(/\D/g,''))+'\',\'_blank\')">💬 Contactar</button>'+(p.site?'<a class="btn btn-blue sm" href="'+esc(/^https?:\/\//.test(p.site)?p.site:'https://'+p.site)+'" target="_blank" rel="noopener">🌐 Website</a>':'')+'</div></div>').join('')
  ||'<div class="empty" style="grid-column:1/-1"><div class="big">🤝</div><b>A VEG ainda não tem parceiros visíveis na sua pesquisa.</b><br>A rede está em validação. Candidate-se abaixo — cada parceiro é analisado e verificado pela equipa VEG antes de aparecer.</div>';
 }
 function renderParceiros(){
@@ -1827,11 +2029,11 @@ function renderParceiros(){
  $('#ptStatus').innerHTML=mine.length?mine.map(p=>'<div class="kv"><span>'+esc(p.name)+' — '+esc(p.cat)+'</span><b>'+(partnerBadge(p.status)||'')+'</b></div>').join(''):'<div class="empty"><div class="big">🤝</div>Ainda não submeteu candidatura de parceria.</div>';}
 
 function applyPartner(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();
- const rec={id:uid(),userId:u.id,name:$('#ptNome').value.trim(),nif:$('#ptNif').value.trim(),cat:$('#ptCat').value,province:$('#ptProv').value,whatsapp:$('#ptWpp').value.trim(),desc:$('#ptDesc').value.trim(),status:'pendente',verified:false,createdAt:new Date().toISOString()};
+ const rec={id:uid(),userId:u.id,name:$('#ptNome').value.trim(),nif:$('#ptNif').value.trim(),cat:$('#ptCat').value,province:$('#ptProv').value,whatsapp:$('#ptWpp').value.trim(),email:$('#ptEmail').value.trim(),site:$('#ptSite').value.trim(),desc:$('#ptDesc').value.trim(),status:'pendente',verified:false,createdAt:new Date().toISOString()};
  db.partners.push(rec);
  notify(u.id,'📩 Candidatura de parceiro submetida. Análise pela equipa VEG em até 5 dias úteis.');
  db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(a=>notify(a.id,'🤝 Nova candidatura de parceiro: '+rec.name+' ('+rec.cat+', '+rec.province+')'));
- logAction('Candidatura de parceiro',rec.name);pushData({tipo:'parceria',nome:rec.name,categoria:rec.cat,provincia:rec.province,whatsapp:rec.whatsapp});saveDB();e.target.reset();renderParceiros();toast('Candidatura submetida para análise.','ok');}
+ logAction('Candidatura de parceiro',rec.name);pushData({tipo:'parceria',nome:rec.name,categoria:rec.cat,provincia:rec.province,whatsapp:rec.whatsapp,email:rec.email,site:rec.site});saveDB();e.target.reset();renderParceiros();toast('Candidatura submetida para análise.','ok');}
 
 function renderFinance(){const u=currentUser();if(!u)return;const pays=db.payments.filter(p=>p.userId===u.id);
  const tot=pays.filter(p=>p.status==='Confirmado').reduce((s,p)=>s+ +p.amount,0);
@@ -1877,6 +2079,8 @@ function adminTab(t){const box=$('#adminBox');const su=role()==='superadmin';
  if(t==='campanhas'){const rows=db.camps.map(c=>{const u=db.users.find(x=>x.id===c.userId);return '<tr><td>'+esc(c.name)+'<br><small>'+esc(u?u.name:'—')+' · '+esc(c.platform)+' · '+esc(c.province)+'</small></td><td>'+fmtKz(c.budget)+'/dia × '+c.days+'</td><td><span class="bdg '+(c.status==='Aprovada'?'b-g':c.status==='Rejeitada'?'b-r':'b-p')+'">'+esc(c.status)+'</span></td><td><button class="btn btn-green sm" onclick="setCamp(\''+c.id+'\',\'Aprovada\')">✔</button> <button class="btn btn-red sm" onclick="setCamp(\''+c.id+'\',\'Rejeitada\')">✖</button></td></tr>';}).join('');
   box.innerHTML=head('📣 Campanhas pendentes de aprovação')+'<div class="twrap"><table><tr><th>Campanha</th><th>Orçamento</th><th>Estado</th><th>Aprovar</th></tr>'+(rows||'<tr><td colspan="4" style="text-align:center;color:var(--mut)">Sem campanhas.</td></tr>')+'</table></div>';}
  if(t==='parceiros'){adPartners(box,head);return;}
+else if(t==='agendamentos'){adAppts(box,head);return;}
+else if(t==='liquidacoes'){adSettlements(box,head);return;}
  if(t==='utilizadores'){const rows=db.users.map(u=>'<tr><td>'+esc(u.name)+'<br><small>'+esc(u.email)+' · '+esc(u.phone)+'</small></td><td><select onchange="setRole(\''+u.id+'\',this.value)" '+(su?'':'disabled')+'><option '+(u.role==='user'?'selected':'')+' value="user">Utilizador</option><option '+(u.role==='business'?'selected':'')+' value="business">Empresarial</option><option '+(u.role==='staff'?'selected':'')+' value="staff">Funcionário VEG</option><option '+(u.role==='admin'?'selected':'')+' value="admin">Administrador</option><option '+(u.role==='superadmin'?'selected':'')+' value="superadmin">Admin. Principal</option></select></td><td><button class="btn btn-grey sm" onclick="toggleUserActive(\''+u.id+'\')">'+(u.active===false?'Reactivar':'Suspender')+'</button></td></tr>').join('');
   box.innerHTML=head('👥 Utilizadores e permissões')+(su?'':'<div class="notice">🔒 Apenas o Administrador Principal pode alterar funções.</div>')+'<div class="twrap"><table><tr><th>Utilizador</th><th>Função (RBAC)</th><th>Estado</th></tr>'+rows+'</table></div>';}
  if(t==='tickets'){const rows=db.tickets.map(tk=>{const u=db.users.find(x=>x.id===tk.userId);return '<tr><td><b>'+esc(tk.code)+'</b><br><small>'+esc(u?u.name:'—')+'</small></td><td>'+esc(tk.subject)+'<br><small>'+esc(tk.desc.slice(0,60))+(tk.desc.length>60?'…':'')+'</small></td><td><select onchange="setTicketStatus(\''+tk.id+'\',this.value)">'+TICKET_STATES.map(x=>'<option '+(x===tk.status?'selected':'')+'>'+x+'</option>').join('')+'</select></td><td>'+(tk.rating?tk.rating+'★':'—')+'</td></tr>';}).join('');
@@ -1915,7 +2119,7 @@ function adPartners(box,head){
   else if(p.status==='ativo'){A.push('<button class="btn btn-gold sm" onclick="setPartnerState(\''+p.id+'\',\'suspenso\')">⏸ Suspender</button>');A.push('<button class="btn btn-grey sm" onclick="setPartnerState(\''+p.id+'\',\'expirado\')">⌛ Expirar</button>');A.push('<button class="btn btn-red sm" onclick="setPartnerState(\''+p.id+'\',\'cancelado\')">✖ Cancelar</button>');}
   else if(p.status==='suspenso'){A.push('<button class="btn btn-green sm" onclick="setPartnerState(\''+p.id+'\',\'ativo\')">▶ Reactivar</button>');A.push('<button class="btn btn-red sm" onclick="setPartnerState(\''+p.id+'\',\'cancelado\')">✖ Cancelar</button>');}
   else{A.push('<button class="btn btn-blue sm" onclick="setPartnerState(\''+p.id+'\',\'em_analise\')">↻ Reabrir análise</button>');}
-  return '<tr><td><b>'+esc(p.name)+'</b><br><small>'+esc(p.nif||'—')+' · candidato: '+(own?esc(own.name):'—')+'</small></td><td>'+esc(p.cat)+'<br><small>'+esc(p.province)+' · '+esc(p.whatsapp)+'</small></td><td>'+(partnerBadge(p.status)||'')+(p.verified?' <span class="bdg b-gold">✔ Verificado</span>':'')+'<br><small>Acordo até: '+vu+'</small></td><td>'+A.join(' ')+'<br><button class="btn btn-grey sm" style="margin-top:4px" onclick="viewPartner(\''+p.id+'\')">👁 Dossiê/Editar</button></td></tr>';
+  return '<tr><td><b>'+esc(p.name)+'</b><br><small>'+esc(p.nif||'—')+' · candidato: '+(own?esc(own.name):'—')+'</small></td><td>'+esc(p.cat)+'<br><small>'+esc(p.province)+' · '+esc(p.whatsapp)+'</small>'+(p.email?'<br><small>✉ '+esc(p.email)+'</small>':'')+(p.site?'<br><small>🌐 '+esc(p.site)+'</small>':'')+'</td><td>'+(partnerBadge(p.status)||'')+(p.verified?' <span class="bdg b-gold">✔ Verificado</span>':'')+'<br><small>Acordo até: '+vu+'</small></td><td>'+A.join(' ')+'<br><button class="btn btn-grey sm" style="margin-top:4px" onclick="viewPartner(\''+p.id+'\')">👁 Dossiê/Editar</button></td></tr>';
  }).join('');
  box.innerHTML=head('🤝 Gestão de Parceiros VEG')+
  '<div class="notice">🛡️ <b>Deliberação administrativa:</b> consulte o dossiê antes de decidir. <b>Aprovar</b> = credenciado (ainda não visível). <b>Verificar</b> = Activo + selo público «Parceiro VEG Verificado». Suspenso/Expirado/Cancelado sai automaticamente da pesquisa. Toda a deliberação fica registada na auditoria e notifica o candidato.</div>'+
@@ -1927,6 +2131,7 @@ function viewPartner(id){const p=db.partners.find(x=>x.id===id);if(!p)return;con
  '<div class="kv"><span>Estado actual</span><b>'+(PARTNER_STATUS[p.status]||p.status)+(p.verified?' · ✔ Verificado':'')+'</b></div>'+
  '<div class="frow"><div class="fld"><label>Nome / Empresa</label><input id="pvName" value="'+esc(p.name)+'"></div><div class="fld"><label>NIF</label><input id="pvNif" value="'+esc(p.nif||'')+'"></div></div>'+
  '<div class="frow3"><div class="fld"><label>Categoria</label><input id="pvCat" value="'+esc(p.cat)+'"></div><div class="fld"><label>Província</label><input id="pvProv" value="'+esc(p.province)+'"></div><div class="fld"><label>WhatsApp</label><input id="pvWpp" value="'+esc(p.whatsapp||'')+'"></div></div>'+
+ '<div class="frow"><div class="fld"><label>E-mail</label><input id="pvEmail" type="email" value="'+esc(p.email||'')+'"></div><div class="fld"><label>Website / Rede social</label><input id="pvSite" value="'+esc(p.site||'')+'"></div></div>'+
  '<div class="fld"><label>Descrição da actividade</label><textarea id="pvDesc" rows="3">'+esc(p.desc||'')+'</textarea></div>'+
  '<div class="fld"><label>Validade do acordo de parceria</label><input id="pvValid" type="date" value="'+(p.validUntil||'')+'"></div>'+
  '<div class="kv"><span>Candidato</span><b>'+(own?esc(own.name)+' · '+esc(own.email||''):'—')+'</b></div>'+
@@ -1935,7 +2140,7 @@ function viewPartner(id){const p=db.partners.find(x=>x.id===id);if(!p)return;con
  '<button class="btn btn-gold" onclick="savePartnerEdit(\''+p.id+'\')">💾 Guardar alterações</button>');
 }
 function savePartnerEdit(id){const p=db.partners.find(x=>x.id===id);if(!p)return;
- p.name=$('#pvName').value.trim()||p.name;p.nif=$('#pvNif').value.trim();p.cat=$('#pvCat').value.trim()||p.cat;p.province=$('#pvProv').value.trim()||p.province;p.whatsapp=$('#pvWpp').value.trim();p.desc=$('#pvDesc').value.trim();p.validUntil=$('#pvValid').value||null;
+ p.name=$('#pvName').value.trim()||p.name;p.nif=$('#pvNif').value.trim();p.cat=$('#pvCat').value.trim()||p.cat;p.province=$('#pvProv').value.trim()||p.province;p.whatsapp=$('#pvWpp').value.trim();p.email=$('#pvEmail').value.trim();p.site=$('#pvSite').value.trim();p.desc=$('#pvDesc').value.trim();p.validUntil=$('#pvValid').value||null;
  logAction('Dossiê de parceiro editado',p.name);saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());adminTab('parceiros');renderParceiros();toast('Dossiê actualizado.','ok');}
 function setPartnerState(id,st){const p=db.partners.find(x=>x.id===id);if(!p)return;
  const allowed=PT_TRANSITIONS[p.status]||[];
