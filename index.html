@@ -1456,7 +1456,7 @@ async function migrateLocalDataToBackend(){
   return mig;
 }
 
-document.addEventListener('DOMContentLoaded',function(){try{VEG_SYNC.boot();}catch(e){console.warn('[VEG SYNC]',e);}});
+document.addEventListener('DOMContentLoaded',function(){try{vegEnsurePassHashes();}catch(e){}try{VEG_SYNC.boot();}catch(e){console.warn('[VEG SYNC]',e);}});
 
 /* ================= Camada de compatibilidade =================
    Mesmo nome e assinatura de antes: todos os modulos existentes
@@ -1823,14 +1823,64 @@ function inviteFriends(){const u=currentUser();const code=u?u.id.toUpperCase():'
 function authTab(t){['login','reg','rec'].forEach(x=>{$('#f'+x[0].toUpperCase()+x.slice(1)).classList.toggle('hidden',x!==t);$('#tab'+x[0].toUpperCase()+x.slice(1)).classList.toggle('on',x===t);});$('#authErr').style.display='none';}
 function doLogin(e){e.preventDefault();const c=$('#liContacto').value.trim().toLowerCase(),p=$('#liSenha').value;
  if(!p){$('#authErr').textContent='⚠️ Insira a sua senha para iniciar sessão.';$('#authErr').style.display='block';return;}
- const u=db.users.find(x=>(x.email.toLowerCase()===c||x.phone===c)&&x.pass===p);if(!u){$('#authErr').textContent='Credenciais inválidas. Verifique o contacto e a senha.';$('#authErr').style.display='block';return;}if(u.active===false){$('#authErr').textContent='Conta suspensa. Contacte o atendimento VEG.';$('#authErr').style.display='block';return;}startLogin(u);}
+ const u=db.users.find(x=>(x.email.toLowerCase()===c||x.phone===c)&&x.pass===p);
+ if(u){if(u.active===false){$('#authErr').textContent='Conta suspensa. Contacte o atendimento VEG.';$('#authErr').style.display='block';return;}startLogin(u);return;}
+ /* FASE 6 — a conta não existe no cache DESTE dispositivo: validar no backend
+    central (Google Sheets), para que contas criadas noutro dispositivo
+    funcionem em qualquer navegador. Sem esta validação remota, novos
+    utilizadores ficavam bloqueados com "credenciais inválidas". */
+ vegRemoteLogin(c,p);}
+async function vegRemoteLogin(c,p){
+ const err=function(msg){$('#authErr').textContent=msg;$('#authErr').style.display='block';};
+ err('A validar as suas credenciais no servidor VEG...');
+ const hash=await vegHash(p);
+ const res=await VEG_API.post('authLogin',{contacto:c,senhaHash:hash});
+ if(res.success&&res.data&&res.data.user){
+  const ru=res.data.user;
+  let nu=db.users.find(x=>x.id===ru.id);
+  if(!nu){
+   nu={id:ru.id||uid(),name:ru.name||'',email:(ru.email||c).toLowerCase(),phone:ru.phone||'',pass:p,role:ru.role||'user',active:ru.active!==false,created:ru.created||ru.createdAt||Date.now(),interests:ru.interests||'',profession:ru.profession||'',province:ru.province||'',idade:ru.idade||'',vegno:ru.vegno||'',tfa:!!ru.tfa,passHash:hash};
+   db.users.push(nu);
+  }else{nu.pass=p;if(hash)nu.passHash=hash;if(ru.active!==undefined)nu.active=ru.active;}
+  logAction('Login via backend central (novo dispositivo)',nu.email);
+  try{await VEG_SYNC.pull();}catch(e){}
+  startLogin(nu);return;
+ }
+ if(res.error&&res.error.code==='ACCOUNT_SUSPENDED'){err('Conta suspensa. Contacte o atendimento VEG.');return;}
+ if(res.error&&res.error.code==='BACKEND_OFFLINE'){err('Sem ligação ao servidor. Tente novamente com ligação à internet.');return;}
+ err(res.message||'Credenciais inválidas. Verifique o contacto e a senha.');
+}
+/* Hash SHA-256 da senha (com sal interno) — usado apenas para validação
+   remota no backend; a senha em texto só fica no dispositivo do próprio
+   utilizador, como sempre. crypto.subtle exige HTTPS (GitHub Pages ✔). */
+async function vegHash(txt){
+ try{
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('VEG::'+String(txt)));
+  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+ }catch(e){return null;}
+}
+/* Contas criadas antes da Fase 6 não têm passHash: gera-o a partir da senha
+   local (que já existe neste dispositivo) e envia ao backend no próximo push. */
+async function vegEnsurePassHashes(){
+ try{
+  let changed=false;
+  for(const u of db.users){
+   if(u.pass&&(u.passHash===undefined||u.passHash===null)){
+    const h=await vegHash(u.pass);
+    if(h){u.passHash=h;changed=true;}
+   }
+  }
+  if(changed)saveDB();
+ }catch(e){}
+}
 function doRegister(e){e.preventDefault();if($('#rgSenha').value!==$('#rgSenha2').value){$('#authErr').textContent='As senhas não coincidem.';$('#authErr').style.display='block';return;}
  const email=$('#rgEmail').value.trim().toLowerCase();if(db.users.some(u=>u.email.toLowerCase()===email)){$('#authErr').textContent='Já existe uma conta com este e-mail.';$('#authErr').style.display='block';return;}
  const u={id:uid(),name:$('#rgNome').value.trim(),email:email,phone:$('#rgTel').value.trim(),pass:$('#rgSenha').value,role:'user',active:true,created:Date.now(),interests:'',profession:'',province:'',idade:'',vegno:String(db.counters.vegNum++).padStart(6,'0')};
  while(db.users.some(x=>x.vegno===u.vegno)){u.vegno=String(db.counters.vegNum++).padStart(6,'0');}
- fileToData($('#rgFoto').files[0],d=>{if(d)u.photo=d;db.users.push(u);db.session={uid:u.id};logAction('Registo de novo utilizador',u.email);const refCode=($('#rgRef')?$('#rgRef').value:'').trim().toUpperCase();if(refCode){const inv=db.users.find(x=>indicaCode(x)===refCode);if(inv&&inv.id!==u.id){db.indications.push({id:uid(),inviterId:inv.id,inviteeName:u.name,inviteeEmail:u.email,at:Date.now()});notify(inv.id,'🎉 '+u.name+' inscreveu-se na VEG APP com o seu código VEG INDICA!');logAction('Inscrição via VEG INDICA',refCode);}}ensureWallet(u);pushData({tipo:'novo_utilizador',...u,pass:undefined});saveDB();enterApp();toast('Conta criada com sucesso!','ok');});}
+ vegHash(u.pass).then(function(h){u.passHash=h;
+ fileToData($('#rgFoto').files[0],d=>{if(d)u.photo=d;db.users.push(u);db.session={uid:u.id};logAction('Registo de novo utilizador',u.email);const refCode=($('#rgRef')?$('#rgRef').value:'').trim().toUpperCase();if(refCode){const inv=db.users.find(x=>indicaCode(x)===refCode);if(inv&&inv.id!==u.id){db.indications.push({id:uid(),inviterId:inv.id,inviteeName:u.name,inviteeEmail:u.email,at:Date.now()});notify(inv.id,'🎉 '+u.name+' inscreveu-se na VEG APP com o seu código VEG INDICA!');logAction('Inscrição via VEG INDICA',refCode);}}ensureWallet(u);pushData({tipo:'novo_utilizador',...u,pass:undefined});saveDB();try{VEG_SYNC.pushNow();}catch(e){}enterApp();toast('Conta criada com sucesso!','ok');});});}
 function startLogin(u){if(u.tfa){const code=String(Math.floor(100000+Math.random()*900000));db.otp={uid:u.id,code,exp:Date.now()+5*60*1000};saveDB();otpModal(u);}else finishLogin(u);}
-function finishLogin(u){db.session={uid:u.id};logAction('Login'+(u.tfa?' (2FA)':''),u.email);saveDB();enterApp();toast('Bem-vindo(a), '+u.name.split(' ')[0]+'!','ok');}
+function finishLogin(u){db.session={uid:u.id};logAction('Login'+(u.tfa?' (2FA)':''),u.email);saveDB();try{VEG_SYNC.pull();}catch(e){}enterApp();toast('Bem-vindo(a), '+u.name.split(' ')[0]+'!','ok');}
 function otpModal(u){modalT('🔐 Verificação em dois passos','<p style="font-size:.83rem;color:var(--mut);margin-bottom:10px;line-height:1.6">Foi gerado um código de 6 dígitos para <b>'+esc(u.email)+'</b>. <span class="bdg b-p">Válido por 5 minutos · uso único</span><br><small>Em produção, o código é enviado por SMS/WhatsApp (API) — <b>DEPENDÊNCIA EXTERNA</b>. Nesta versão de demonstração, o código é: <b style="color:var(--gold2);letter-spacing:2px">'+db.otp.code+'</b></small></p><div class="fld"><label>Código de verificação</label><input id="otpIn" maxlength="6" inputmode="numeric" placeholder="••••••" onkeydown="if(event.key===\'Enter\')verifyOtp()"></div><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn btn-gold sm" onclick="verifyOtp()">✔ Verificar e entrar</button><button class="btn btn-grey sm" onclick="resendOtp()">🔁 Novo código</button><button class="btn btn-red sm" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove());">Cancelar</button></div><p style="font-size:.7rem;color:#9AA7BC;margin-top:10px">As tentativas falhadas ficam registadas nos logs de segurança.</p>');
  setTimeout(()=>{const i=document.getElementById('otpIn');if(i)i.focus();},80);}
 function verifyOtp(){const o=db.otp;if(!o||Date.now()>o.exp){toast('Código expirado. Gere um novo.','er');return;}const v=document.getElementById('otpIn').value.trim();if(v!==o.code){toast('Código incorrecto. Tentativa registada nos logs.','er');const uu=db.users.find(x=>x.id===o.uid);if(uu)logAction('Falha de verificação 2FA',uu.email);return;}const u=db.users.find(x=>x.id===o.uid);db.otp=null;document.querySelectorAll('.mback').forEach(m=>m.remove());finishLogin(u);}
