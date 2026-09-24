@@ -956,6 +956,16 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
       <div id="cfgStatus" style="margin-top:10px;font-size:.8rem"></div>
     </div>
     <div class="card">
+      <h3><span class="dot"></span>Centralização &amp; Sincronização <span class="bdg b-g">Fase 6</span></h3>
+      <p style="font-size:.78rem;color:var(--mut)">Google Apps Script + Google Sheets como fonte central dos dados operacionais. O armazenamento local funciona apenas como cache — em caso de divergência, o backend prevalece.</p>
+      <div id="syncStateLine" style="font-size:.8rem;margin:8px 0">Estado: —</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-gold sm" onclick="VEG_SYNC.syncNow(true)">🔄 Sincronizar agora</button>
+        <button class="btn btn-grey sm" onclick="migrateLocalDataToBackend()">⬆ Migrar dados locais → backend</button>
+      </div>
+      <div id="migStatus" style="margin-top:10px;font-size:.78rem"></div>
+    </div>
+    <div class="card">
       <h3><span class="dot"></span>Preferências</h3>
       <div class="fld"><label>Idioma</label><select><option>Português (Angola)</option><option>English (preparado)</option></select></div>
       <div class="fld"><label>Notificações</label><select><option>Activas (pedidos, mensagens, lembretes)</option><option>Só essenciais</option><option>Desactivadas</option></select></div>
@@ -1071,7 +1081,7 @@ function defaultDB(){return {
  leads:[], orders:[], sols:[], docs:[], camps:[], appts:[], partners:[], tickets:[], msgs:[], notifs:[], payments:[], logs:[]
 };}
 function loadDB(){try{db=JSON.parse(localStorage.getItem(DB_KEY));}catch(e){db=null;}if(!db||!db.users){db=defaultDB();saveDB();}}
-function saveDB(){localStorage.setItem(DB_KEY,JSON.stringify(db));}
+function saveDB(){localStorage.setItem(DB_KEY,JSON.stringify(db));try{if(typeof VEG_SYNC!=='undefined')VEG_SYNC.onLocalSave();}catch(e){}}
 loadDB();
 /* FASE 1: rede de parceiros recomeça vazia — remove parceiros-semente antigos */
 if(Array.isArray(db.partners)){db.partners=db.partners.filter(p=>!['pt1','pt2','pt3'].includes(p.id));saveDB();}
@@ -1110,7 +1120,7 @@ function fileToData(file,cb,max){max=max||5*1024*1024;if(!file)return cb('');if(
 /* ================= Integrações externas (graciosas) ================= */
 /* ================= VEG API CLIENT ================= */
 const VEG_CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbyMm6Da_ENHlh6b8hs24naQNedtezRBbzW7Z_yS2N3tvAVhY5MDQchg9JABJlRCQSquSg/exec",   // URL do Web App Code.gs (deployment /exec) - tambem configuravel no ecra Admin (campo API)
+  API_URL: "https://script.google.com/macros/s/AKfycbx_0pHBx6Z-PgXtSUlx5wdDSm91EnB78ZutNn_usmtpLa787wHHfSgBTHrgaS7WQ5pB/exec",   // URL do Web App Code.gs (deployment /exec) - tambem configuravel no ecra Admin (campo API)
   TIMEOUT_MS: 30000,
   APP_VERSION: 1
 };
@@ -1190,6 +1200,263 @@ const VEG_API = {
   get(action, params){ return this.request(action, params); },
   post(action, payload){ return this.request(action, payload); }
 };
+
+/* ================= FASE 6 — CENTRALIZAÇÃO, CACHE E SINCRONIZAÇÃO =================
+   Google Apps Script + Google Sheets passam a ser a fonte central da verdade.
+   O localStorage fica reduzido a CACHE local (pode ser reconstruído a partir
+   do backend). Nada foi removido: todos os módulos existentes continuam a
+   funcionar — esta camada é aditiva.
+   Regra de falha (Fase 6.17): sem confirmação do backend, a sincronização
+   NUNCA é apresentada como concluída.
+   ============================================================================ */
+function _vegSanitize(rec){
+  /* Remove credenciais e binários antes de qualquer envio ao backend.
+     Nunca saem do dispositivo: passwords, fotos/ficheiros em data:URL. */
+  if(rec==null||typeof rec!=='object')return rec;
+  if(Array.isArray(rec))return rec.map(_vegSanitize);
+  const o={};
+  Object.keys(rec).forEach(function(k){
+    if(k==='pass'||k==='password'||k==='otp')return;
+    const v=rec[k];
+    if(typeof v==='string'&&v.length>256&&v.indexOf('data:')===0){o[k]='';return;}
+    o[k]=_vegSanitize(v);
+  });
+  return o;
+}
+
+const VEG_SYNC = {
+  COLLECTIONS:['users','partners','appts','payments','settlements','wallets','notifs','logs','businesses','products','sols','orders','tickets','camps','indications'],
+  state:'local',           // local | syncing | synced | error
+  _dirty:false,
+  _pushing:false,
+  _timer:null,
+  _lastWarn:0,
+
+  /* ---------- cache local (Fase 6.8) ---------- */
+  _writeCacheMeta(){
+    try{
+      localStorage.setItem('VEG_CACHE_VERSION',String(VEG_CONFIG.APP_VERSION));
+      localStorage.setItem('VEG_CACHE_TIMESTAMP',String(Date.now()));
+      localStorage.setItem('VEG_CACHE_USER_ID',(db.session&&db.session.uid)||'');
+    }catch(e){}
+  },
+
+  /* ---------- chamado por saveDB() após cada escrita local ---------- */
+  onLocalSave(){
+    this._writeCacheMeta();
+    this._dirty=true;
+    if(this.state==='synced')this.setState('local');
+    this.schedulePush();
+  },
+
+  schedulePush(){
+    if(this._timer)clearTimeout(this._timer);
+    const self=this;
+    this._timer=setTimeout(function(){if(self._dirty)self.pushNow();},3000);
+  },
+
+  /* ---------- logs técnicos (Fase 6.18) — sem dados sensíveis ---------- */
+  techLog(action,success,code,ms){
+    try{
+      if(!Array.isArray(db.techLogs))db.techLogs=[];
+      db.techLogs.unshift({action:action,ts:Date.now(),success:!!success,code:code||null,ms:ms||0,userId:(db.session&&db.session.uid)||null});
+      if(db.techLogs.length>200)db.techLogs.length=200;
+      localStorage.setItem(DB_KEY,JSON.stringify(db)); /* escrita directa: não dispara novo push */
+    }catch(e){}
+  },
+
+  /* ---------- indicador discreto (Fase 6.20) ---------- */
+  injectIndicator(){
+    if(document.getElementById('vegSyncInd'))return;
+    const el=document.createElement('div');
+    el.id='vegSyncInd';
+    el.title='Estado da sincronização com o backend VEG (Google Sheets)';
+    el.style.cssText='position:fixed;left:10px;bottom:10px;z-index:9998;font-size:.68rem;padding:4px 11px;border-radius:20px;background:rgba(11,27,51,.88);color:#9AA7BC;border:1px solid rgba(255,255,255,.08);cursor:default;user-select:none;font-family:inherit';
+    document.body.appendChild(el);
+    this._renderInd();
+  },
+  _renderInd(){
+    const el=document.getElementById('vegSyncInd');
+    const map={
+      synced:['#2ECC71','●','Sincronizado'],
+      syncing:['#D4AF37','','A sincronizar...'],
+      error:['#E74C3C','⚠','Não sincronizado'],
+      local:['#9AA7BC','◌','Cache local']
+    };
+    const m=map[this.state]||map.local;
+    if(el)el.innerHTML='<span style="color:'+m[0]+'">'+m[1]+'</span> '+m[2];
+    const line=document.getElementById('syncStateLine');
+    if(line){
+      const ts=localStorage.getItem('VEG_CACHE_TIMESTAMP');
+      line.innerHTML='Estado: <b style="color:'+m[0]+'">'+m[1]+' '+m[2]+'</b>'+(ts?' <small style="color:var(--mut)">· cache: '+new Date(+ts).toLocaleString('pt-AO')+'</small>':'');
+    }
+  },
+  setState(s){this.state=s;this._renderInd();},
+
+  _warnOnce(msg){
+    const now=Date.now();
+    if(now-this._lastWarn<60000)return;
+    this._lastWarn=now;
+    if(typeof toast==='function')toast(msg,'er');
+  },
+
+  /* ---------- envio das alterações locais → backend (Fase 6.7) ---------- */
+  async pushNow(){
+    if(this._pushing)return{success:false,error:{code:'BUSY'}};
+    if(!VEG_CONFIG.API_URL){this.setState('local');return{success:false,error:{code:'NOT_CONFIGURED'}};}
+    this._pushing=true;this.setState('syncing');
+    const started=Date.now();
+    const cols={};
+    this.COLLECTIONS.forEach(function(k){
+      const v=db[k];
+      if(Array.isArray(v))cols[k]=_vegSanitize(v.slice(-300));
+      else if(v&&typeof v==='object')cols[k]=_vegSanitize(v);
+    });
+    const res=await VEG_API.post('syncDelta',{cacheVersion:VEG_CONFIG.APP_VERSION,userId:(db.session&&db.session.uid)||null,collections:cols});
+    this.techLog('syncDelta',res.success,res.error&&res.error.code,Date.now()-started);
+    this._pushing=false;
+    if(res.success){this._dirty=false;this.setState('synced');}
+    else{
+      this.setState('error');
+      if(res.error&&res.error.code!=='NOT_CONFIGURED')
+        this._warnOnce('Não foi possível sincronizar os dados neste momento. Verifique a sua ligação e tente novamente.');
+    }
+    return res;
+  },
+
+  /* ---------- leitura do backend → cache local; o backend prevalece (Fase 6.8) ---------- */
+  async pull(){
+    if(!VEG_CONFIG.API_URL){this.setState('local');return{success:false,error:{code:'NOT_CONFIGURED'}};}
+    const started=Date.now();
+    const res=await VEG_API.post('getSnapshot',{userId:(db.session&&db.session.uid)||null,role:(typeof role==='function'?role():'visitante')});
+    this.techLog('getSnapshot',res.success,res.error&&res.error.code,Date.now()-started);
+    if(res.success&&res.data){
+      const cols=res.data.collections||res.data;
+      this.mergeSnapshot(cols);
+      try{localStorage.setItem(DB_KEY,JSON.stringify(db));}catch(e){}
+      this._writeCacheMeta();
+      try{if(!document.getElementById('shell').classList.contains('hidden')&&typeof renderAll==='function')renderAll();}catch(e){}
+    }
+    return res;
+  },
+
+  mergeSnapshot(cols){
+    /* Fusão por ID: o registo do backend prevalece sobre o cache;
+       registos só locais são mantidos (serão enviados no próximo push). */
+    if(!cols||typeof cols!=='object')return 0;
+    let n=0;
+    Object.keys(cols).forEach(function(k){
+      const remote=cols[k];
+      if(Array.isArray(remote)){
+        if(!Array.isArray(db[k]))db[k]=[];
+        const map={};
+        db[k].forEach(function(r){if(r&&r.id)map[r.id]=r;});
+        remote.forEach(function(r){
+          if(r&&r.id){
+            if(map[r.id]){const i=db[k].indexOf(map[r.id]);db[k][i]=Object.assign({},map[r.id],r);}
+            else db[k].push(r);
+            n++;
+          }
+        });
+      }else if(remote&&typeof remote==='object'){
+        if(!db[k]||typeof db[k]!=='object'||Array.isArray(db[k]))db[k]={};
+        Object.keys(remote).forEach(function(key){db[k][key]=remote[key];n++;});
+      }
+    });
+    return n;
+  },
+
+  /* ---------- arranque: verifica sessão → consulta backend → actualiza cache (Fase 6.7) ---------- */
+  async boot(){
+    this.injectIndicator();
+    const self=this;
+    document.addEventListener('visibilitychange',function(){
+      if(!document.hidden&&self._dirty)self.pushNow();
+    });
+    setInterval(function(){if(self._dirty&&!self._pushing)self.pushNow();},60000);
+    if(!VEG_CONFIG.API_URL){this.setState('local');return;}
+    this.setState('syncing');
+    const res=await this.pull();
+    if(res.success){this._dirty=false;this.setState('synced');}
+    else this.setState('error');
+  },
+
+  async syncNow(manual){
+    if(!VEG_CONFIG.API_URL){if(manual&&typeof toast==='function')toast('Configure a URL da API VEG nas Configurações.','er');this.setState('local');return{success:false};}
+    this.setState('syncing');
+    const pull=await this.pull();
+    const push=await this.pushNow();
+    const ok=!!(pull.success&&push.success);
+    if(manual&&typeof toast==='function')toast(ok?'✔ Dados sincronizados com o backend.':'Sincronização não confirmada pelo backend. Tente novamente.',ok?'ok':'er');
+    return{success:ok};
+  }
+};
+
+/* ================= FASE 6.6 / 6.16 — MIGRAÇÃO SEGURA localStorage → backend =================
+   Fluxo: BACKUP → verificação → normalização → envio → validação → registo.
+   NUNCA apaga os dados locais; a estrutura anterior só seria removida após
+   validação manual pelo administrador.
+   ============================================================================ */
+async function migrateLocalDataToBackend(){
+  if(typeof isAdmin==='function'&&!isAdmin()){toast('⛔ Apenas administradores podem executar a migração.','er');return;}
+  if(!VEG_CONFIG.API_URL){toast('Configure a URL da API VEG antes de migrar.','er');return;}
+  const st=document.getElementById('migStatus');
+  const say=function(h){if(st)st.innerHTML=h;};
+
+  /* 1) BACKUP obrigatório antes de alterar dados (Fase 6.16) */
+  try{
+    const blob=new Blob([JSON.stringify(db,null,1)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='vegapp_backup_'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.json';
+    document.body.appendChild(a);a.click();a.remove();
+  }catch(e){}
+
+  const mig={migrationId:'VEG-MIG-'+Date.now(),startedAt:new Date().toISOString(),completedAt:null,recordsProcessed:0,recordsCreated:0,recordsUpdated:0,recordsSkipped:0,errors:[],status:'em_curso'};
+  const ENT=[['users','users'],['partners','partners'],['appts','appointments'],['payments','payments'],['settlements','settlements'],['wallets','wallets'],['notifs','notifications'],['logs','audit'],['businesses','businesses'],['products','products'],['sols','sols'],['orders','orders'],['tickets','tickets'],['camps','campaigns'],['indications','indications']];
+  say('⏳ Migração <b>'+mig.migrationId+'</b> em curso... backup descarregado.');
+
+  for(let e=0;e<ENT.length;e++){
+    const localKey=ENT[e][0], entity=ENT[e][1];
+    let records=db[localKey];
+    if(localKey==='wallets'&&records&&typeof records==='object'&&!Array.isArray(records)){
+      records=Object.keys(records).map(function(uidK){return Object.assign({id:'W-'+uidK,userId:uidK},records[uidK]);});
+    }
+    if(!Array.isArray(records)||!records.length){mig.recordsSkipped++;continue;}
+    const clean=_vegSanitize(records);
+    mig.recordsProcessed+=clean.length;
+    /* envio em lotes de 200 para não exceder limites do Apps Script */
+    for(let i=0;i<clean.length;i+=200){
+      const batch=clean.slice(i,i+200);
+      const res=await VEG_API.post('migrate',{migrationId:mig.migrationId,entity:entity,records:batch,batchIndex:i/200,batchTotal:Math.ceil(clean.length/200)});
+      VEG_SYNC.techLog('migrate:'+entity,res.success,res.error&&res.error.code,0);
+      if(res.success){
+        const d=res.data||{};
+        mig.recordsCreated+=d.created||0;
+        mig.recordsUpdated+=d.updated||0;
+        if(d.created==null&&d.updated==null)mig.recordsCreated+=batch.length;
+      }else{
+        mig.errors.push({entity:entity,batch:i/200,code:(res.error&&res.error.code)||'ERROR',message:res.message||''});
+      }
+      say('⏳ Migração <b>'+mig.migrationId+'</b> · '+entity+' ('+Math.min(i+200,clean.length)+'/'+clean.length+')...');
+    }
+  }
+
+  mig.completedAt=new Date().toISOString();
+  mig.status=mig.errors.length?'concluido_com_erros':'concluido';
+  if(!Array.isArray(db.migrations))db.migrations=[];
+  db.migrations.unshift(mig);
+  saveDB();
+  const ok=!mig.errors.length;
+  say((ok?'✔':'⚠')+' Migração <b>'+mig.migrationId+'</b> '+mig.status.replace('_',' ')+
+      ': '+mig.recordsProcessed+' processados · '+mig.recordsCreated+' criados · '+mig.recordsUpdated+' actualizados'+
+      (mig.errors.length?' · <span style="color:#E74C3C">'+mig.errors.length+' erro(s)</span>':'')+
+      '<br><small style="color:var(--mut)">Os dados locais foram mantidos (cache). O backup foi descarregado antes da migração.</small>');
+  toast(ok?'✔ Migração concluída e validada pelo backend.':'Migração concluída com erros — ver detalhes em Configurações.',ok?'ok':'er');
+  return mig;
+}
+
+document.addEventListener('DOMContentLoaded',function(){try{VEG_SYNC.boot();}catch(e){console.warn('[VEG SYNC]',e);}});
 
 /* ================= Camada de compatibilidade =================
    Mesmo nome e assinatura de antes: todos os modulos existentes
@@ -1852,7 +2119,7 @@ function payInstructions(id){const a=db.appts.find(x=>x.id===id);if(!a||!a.quote
  modalT('💳 Pagamento do serviço — '+a.serv,
  '<div class="kv"><span>Valor a pagar (total)</span><b style="color:var(--gold2);font-size:1.2rem">'+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz</b></div>'+
  '<div class="notice">💰 Pague à <b>VEG — Voz Empreendedora Global</b> (garantia do serviço). Após o pagamento, a VEG confirma e o serviço fica garantido (Confirmação 2/3).</div>'+
- '<div class="kv"><span>📱 Multicaixa Express</span><b>+244 921 636 353 (VEG)</b></div>'+
+ '<div class="kv"><span>📱 Multicaixa Express</span><b>+244 933 803 862 (VEG)</b></div>'+
  '<div class="kv"><span>🏦 Transferência bancária</span><b>IBAN VEG — solicite por WhatsApp</b></div>'+
  '<div class="kv"><span>💳 TPA</span><b>No atendimento VEG</b></div>'+
  '<div class="fld" style="margin-top:12px"><label>Referência do pagamento (opcional)</label><input id="payRef" placeholder="Nº de transação / comprovativo"></div>'+
