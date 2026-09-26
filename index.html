@@ -248,11 +248,14 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
   <a data-s="negocio" data-min="user">💼 Meu Negócio</a>
   <a data-s="crm" data-min="user">🤝 CRM VEG</a>
   <a data-s="market" data-min="visitante">🛒 VEG Market</a>
+  <a data-s="pesquisa" data-min="visitante">🔍 VEG Search</a>
+  <a data-s="oportunidades" data-min="visitante">💡 Oportunidades</a>
   <a data-s="solucoes" data-min="visitante">🧩 Soluções VEG</a>
   <a data-s="smart" data-min="user">🧠 VEG SMART</a>
   <a data-s="objetivos" data-min="user">🎯 Objectivos</a>
   <a data-s="marketing" data-min="user">📣 Marketing</a>
   <a data-s="parceiros" data-min="visitante">🤝 Parceiros</a>
+  <a data-s="portal" data-min="user">🏢 Portal do Parceiro</a>
   <a data-s="indica" data-min="user">👥 VEG Indica</a>
   <a data-s="chatequipa" data-min="staff">💬 Chat Equipa</a>
   <a data-s="financeiro" data-min="user">💳 VEG Finance</a>
@@ -273,8 +276,10 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
   <div class="hero"><div class="in">
     <h2 id="helloUser">Bem-vindo à VEG APP</h2>
     <div class="tag">Criar. Divulgar. Resolver. Crescer. — O seu escritório virtual de negócios, serviços e soluções.</div>
-    <div class="sbar"><input id="smartQ" placeholder="O que você precisa resolver? Ex.: preciso de um website para o meu negócio" onkeydown="if(event.key==='Enter')vegSmart()"><button onclick="vegSmart()">Resolver</button></div>
+    <div class="sbar"><input id="smartQ" placeholder="O que procura? Ex.: fotógrafo em Luanda · computadores · website para o meu negócio" onkeydown="if(event.key==='Enter')vegDoSearchFromHome()"><button onclick="vegDoSearchFromHome()">🔍 Pesquisar</button><button onclick="vegSmart()" style="background:#22375C;color:#D4AF37" title="Diagnóstico e direccionamento VEG SMART">🧠 Resolver</button></div>
     <div class="chips">
+      <span class="chipx" onclick="go('pesquisa')">🔍 Pesquisar no ecossistema</span>
+      <span class="chipx" onclick="go('oportunidades')">💡 Oportunidades</span>
       <span class="chipx" onclick="go('negocio')">Criar negócio</span>
       <span class="chipx" onclick="go('marketing')">Divulgar negócio</span>
       <span class="chipx" onclick="go('crm')">Encontrar clientes</span>
@@ -296,6 +301,8 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
       <div class="tile" onclick="go('negocio')"><div class="ic">💼</div><h4>Meu Escritório</h4><p>Perfil empresarial, catálogo e clientes</p></div>
       <div class="tile" onclick="go('documentos')"><div class="ic">📄</div><h4>Documentos</h4><p>Propostas, contratos, orçamentos</p></div>
       <div class="tile" onclick="go('market')"><div class="ic">🛒</div><h4>VEG Market</h4><p>Produtos e serviços de empresas e parceiros</p></div>
+      <div class="tile" onclick="go('pesquisa')"><div class="ic">🔍</div><h4>VEG Search</h4><p>Pesquisa unificada: empresas, profissionais, produtos, parceiros, oportunidades</p></div>
+      <div class="tile" onclick="go('oportunidades')"><div class="ic">💡</div><h4>Oportunidades</h4><p>Procuras empresariais e leads de negócio moderados</p></div>
       <div class="tile" onclick="go('crm')"><div class="ic">🤝</div><h4>CRM VEG</h4><p>Do contacto à pós-venda</p></div>
       <div class="tile" onclick="go('solucoes')"><div class="ic">🧩</div><h4>13 Eixos VEG</h4><p>Soluções completas da VEG</p></div>
       <div class="tile" onclick="go('marketing')"><div class="ic">📣</div><h4>Marketing</h4><p>Campanhas desde 1.350 Kz/dia</p></div>
@@ -362,6 +369,17 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
         <div class="fld"><label>E-mail comercial</label><input id="bzMail" type="email" placeholder="empresa@email.com"></div>
         <div class="fld"><label>Website / redes sociais</label><input id="bzWeb" placeholder="www. ou @instagram"></div>
       </div>
+      <div class="frow">
+        <div class="fld"><label>Nome comercial (se diferente)</label><input id="bzTrade" placeholder="Nome de fachada / marca"></div>
+        <div class="fld"><label>Sector de actividade</label><select id="bzSector"><option value="">Seleccionar...</option><option>Comércio</option><option>Serviços</option><option>Indústria</option><option>Agricultura</option><option>Tecnologia</option><option>Construção</option><option>Saúde</option><option>Educação</option><option>Transportes</option><option>Outro</option></select></div>
+      </div>
+      <div class="frow3">
+        <div class="fld"><label>Documentos (referências/links)</label><input id="bzDocs" placeholder="Ex.: alvará, registo comercial..."></div>
+        <div class="fld"><label>Certificações</label><input id="bzCerts" placeholder="Ex.: ISO 9001, certificado sanitário..."></div>
+        <div class="fld"><label>Portfólio (links)</label><input id="bzPort" placeholder="Ex.: drive.google.com/..."></div>
+      </div>
+      <div class="fld"><label>Visibilidade do perfil</label><select id="bzVis"><option value="privado">Privado — só a VEG vê</option><option value="publico">Público — após verificação VEG</option></select></div>
+      <div id="bzVerif" style="margin-bottom:10px"></div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <button class="btn btn-gold" type="submit">💾 Guardar Perfil Empresarial</button>
         <button class="btn btn-grey" type="button" onclick="toggleBizActive()" id="bzToggle" style="display:none">Desactivar perfil</button>
@@ -377,7 +395,11 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
         <div class="fld"><label>Tipo *</label><select id="pdTipo"><option value="">Seleccionar...</option><option>Produto</option><option>Serviço</option></select></div>
         <div class="fld"><label>Preço (Kz) *</label><input id="pdPreco" type="number" min="0" required placeholder="Ex.: 15000"></div>
       </div>
-      <div class="fld"><label>Descrição</label><input id="pdDesc" placeholder="Breve descrição para o catálogo e o VEG Market"></div>
+      <div class="frow3">
+        <div class="fld"><label>Stock disponível <span style="text-transform:none;color:#9AA7BC">(produtos; em branco = sem limite)</span></label><input id="pdStock" type="number" min="0" placeholder="Ex.: 20"></div>
+        <div class="fld"><label>Estado na publicação</label><select id="pdEstado"><option value="ativo">Activo — visível e vendável</option><option value="rascunho">Rascunho — guardado, não visível</option></select></div>
+        <div class="fld"><label>Descrição</label><input id="pdDesc" placeholder="Breve descrição para o catálogo e o VEG Market"></div>
+      </div>
       <div class="fld"><label>Foto / vídeo do item (máx. recomendado: 5 MB nesta versão)</label>
         <div style="display:flex;gap:13px;align-items:center">
           <img id="pdPrev" style="width:64px;height:64px;border-radius:12px;object-fit:cover;border:1px solid var(--line);display:none">
@@ -387,7 +409,7 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
       </div>
       <button class="btn btn-blue sm" type="submit">+ Adicionar ao catálogo e ao VEG Market</button>
     </form>
-    <div class="twrap"><table id="pdTable"><tr><th>Designação</th><th>Tipo</th><th>Preço</th><th>Estado</th><th></th></tr></table></div>
+    <div class="twrap"><table id="pdTable"><tr><th>Designação</th><th>Tipo</th><th>Preço</th><th>Stock</th><th>Estado</th><th>Acções</th></tr></table></div>
   </div>
 </section>
 
@@ -552,6 +574,71 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
   </div>
 </section>
 
+<!-- ========== VEG SEARCH (P8) + VEG MATCH (P9) ========== -->
+<section id="pesquisa" class="scr">
+  <div class="crumb">Plataforma / <b>VEG SEARCH</b></div>
+  <h2 class="st">Pesquisa Unificada VEG</h2>
+  <p class="sb">Um único campo para encontrar empresas, profissionais, parceiros, produtos e oportunidades. Só aparece o que cumpre a <b>regra de confiança VEG</b>: parceiro aprovado+verificado+vigente · empresa pública+verificada · profissional público+verificado · produto activo com stock · oportunidade publicada. Nenhum dado privado é exposto.</p>
+  <div class="card">
+    <div class="sbar" style="border:1px solid var(--line)"><input id="vq" placeholder="Ex.: fotógrafo em Luanda · computadores · fornecedor de cadeiras..." onkeydown="if(event.key==='Enter')vegDoSearch()"><button onclick="vegDoSearch()">🔍 Pesquisar</button></div>
+    <div class="step" style="margin-top:12px" id="vqTipos"></div>
+    <div class="frow" style="margin-top:12px">
+      <div class="fld" style="margin-bottom:0"><label>Província</label><select id="vqProv" onchange="vegDoSearch()"><option value="">Todas as províncias</option></select></div>
+      <div class="fld" style="margin-bottom:0"><label>Ordenação</label><select id="vqSort" onchange="vegDoSearch()"><option value="tipo">Por tipo de entidade</option><option value="az">Nome (A–Z)</option></select></div>
+    </div>
+    <p style="font-size:.72rem;color:#9AA7BC;margin-top:10px" id="vqRule"></p>
+  </div>
+  <div class="card" id="vqOutCard">
+    <h3><span class="dot"></span>Resultados</h3>
+    <div id="vqOut"><div class="empty"><div class="big">🔍</div>Escreva o que procura e toque em <b>Pesquisar</b>.</div></div>
+  </div>
+  <div class="card">
+    <h3><span class="dot"></span>🎯 VEG MATCH — correspondência explicável</h3>
+    <p style="font-size:.8rem;color:var(--mut);margin-bottom:12px">Descreva a sua necessidade e o VEG MATCH cruza critérios objectivos (categoria, localização, palavras-chave, verificação, experiência). <b>Os critérios NUNCA são escondidos</b> — cada resultado mostra o score e os motivos (secção 11 do Plano Estratégico).</p>
+    <form onsubmit="return vegMatchRun(event)">
+      <div class="fld"><label>A sua necessidade *</label><textarea id="vmQ" rows="2" required placeholder="Ex.: preciso de um fotógrafo para um casamento em Luanda, em Setembro"></textarea></div>
+      <div class="frow">
+        <div class="fld"><label>Categoria / especialidade</label><input id="vmCat" placeholder="Ex.: Fotógrafo, Tecnologia, Limpeza..."></div>
+        <div class="fld"><label>Província</label><select id="vmProv"><option value="">Todas</option></select></div>
+      </div>
+      <button class="btn btn-gold" type="submit">🎯 Encontrar correspondências</button>
+    </form>
+    <div id="vmOut" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<!-- ========== VEG OPPORTUNITIES (P10) ========== -->
+<section id="oportunidades" class="scr">
+  <div class="crumb">Plataforma / <b>VEG OPPORTUNITIES</b></div>
+  <h2 class="st">Central de Oportunidades VEG</h2>
+  <p class="sb">Pedidos de serviço, procuras empresariais, orçamentos e procurement — publicados pela VEG ou por empresas após moderação. Manifeste interesse e o seu contacto chega como <b>lead ao CRM do publicador</b>; os contactos privados nunca são expostos publicamente.</p>
+  <div class="card">
+    <h3><span class="dot"></span>💡 Oportunidades publicadas</h3>
+    <div id="oppGrid"><div class="empty"><div class="big">💡</div>Sem oportunidades publicadas de momento.</div></div>
+  </div>
+  <div class="card hidden" id="oppMyCard">
+    <h3><span class="dot"></span>As minhas propostas</h3>
+    <div class="twrap"><table id="oppMineTable"><tr><th>Título</th><th>Tipo</th><th>Valor</th><th>Província</th><th>Estado</th></tr></table></div>
+  </div>
+  <div class="card">
+    <h3><span class="dot"></span>Propor uma oportunidade</h3>
+    <div class="notice">🛡️ <b>Moderação obrigatória:</b> toda a proposta fica <b>pendente</b> e privada até aprovação do VEG ADMIN. Só depois é publicada e passa a alimentar a pesquisa unificada.</div>
+    <form onsubmit="return saveOpp(event)">
+      <div class="frow">
+        <div class="fld"><label>Título *</label><input id="oppTitulo" required placeholder="Ex.: Fornecimento de 100 cadeiras para escritório"></div>
+        <div class="fld"><label>Tipo *</label><select id="oppTipo" required><option value="">Seleccionar...</option><option>pedido de serviço</option><option>pedido de produto</option><option>procura empresarial</option><option>pedido de orçamento</option><option>procurement</option><option>campanha</option><option>indicação</option></select></div>
+      </div>
+      <div class="frow3">
+        <div class="fld"><label>Província</label><select id="oppProv"></select></div>
+        <div class="fld"><label>Valor estimado (Kz)</label><input id="oppValor" type="number" min="0" placeholder="Opcional"></div>
+        <div class="fld"><label>Validade</label><input id="oppValidade" type="date"></div>
+      </div>
+      <div class="fld"><label>Descrição *</label><textarea id="oppDesc" rows="3" required placeholder="Quantidades, prazos, localização de entrega, requisitos..."></textarea></div>
+      <button class="btn btn-gold" type="submit">📨 Submeter para moderação VEG</button>
+    </form>
+  </div>
+</section>
+
 <!-- ========== MARKETING ========== -->
 <section id="marketing" class="scr">
   <div class="crumb">Serviços / <b>VEG Marketing — Centro de Negócios</b></div>
@@ -609,22 +696,24 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
     <form onsubmit="createAppt(event)">
       <div class="frow3">
         <div class="fld"><label>Tipo de serviço *</label><select id="agServ" required><option>Consulta de saúde</option><option>Serviço tecnológico / reparação</option><option>Formação / curso</option><option>Produção musical (estúdio)</option><option>Consultoria empresarial</option><option>Serviço de limpeza</option><option>Serviço público (encaminhamento)</option><option>Outro serviço VEG</option></select></div>
-        <div class="fld"><label>Data *</label><input id="agData" type="date" required></div>
+        <div class="fld"><label>Data *</label><input id="agData" type="date" required onchange="vegLoadSlots()"></div>
         <div class="fld"><label>Horário *</label><select id="agHora" required><option value="">Seleccionar...</option><option>08:00</option><option>09:00</option><option>10:00</option><option>11:00</option><option>13:00</option><option>14:00</option><option>15:00</option><option>16:00</option><option>17:00</option></select></div>
       </div>
+      <input type="hidden" id="agSlot">
+      <div class="fld" id="agSlotsWrap" style="display:none"><label>Horários livres (validados no servidor)</label><div id="agSlots" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div></div>
       <div class="fld"><label>Local / preferência</label><input id="agLocal" placeholder="Ex.: Presencial na VEG (Luanda) ou endereço do cliente"></div>
       <div class="frow">
         <div class="fld"><label>E-mail para notificações</label><input id="agEmail" type="email" placeholder="Recebe actualizações do agendamento por e-mail"></div>
         <div class="fld"><label>WhatsApp para notificações</label><input id="agWpp" placeholder="+244 9XX XXX XXX"></div>
       </div>
       <div class="fld"><label>Observações</label><textarea id="agObs" rows="2" placeholder="Detalhes que o prestador deve saber..."></textarea></div>
-      <div class="fld"><label>Parceiro preferencial (opcional)</label><select id="agPartner"></select></div>
-      <p style="font-size:.76rem;color:var(--mut);margin:-6px 0 12px">🛡️ Todo agendamento passa por validação administrativa VEG antes de ser encaminhado ao parceiro.</p>
+      <div class="fld"><label>Parceiro preferencial (opcional)</label><select id="agPartner" onchange="vegLoadSlots()"></select></div>
+      <p style="font-size:.76rem;color:var(--mut);margin:-6px 0 12px">🛡️ Para marcações através da VEG APP são apresentados apenas parceiros que cumprem os critérios de elegibilidade e formalização VEG. Com parceiro seleccionado, os horários livres são consultados em tempo real no servidor e a marcação só avança em slot efectivamente disponível — todo o pedido passa por validação administrativa VEG antes de ser encaminhado ao parceiro.</p>
       <button class="btn btn-gold" type="submit">📅 Confirmar Agendamento</button>
     </form>
   </div>
   <div class="card">
-    <h3><span class="dot"></span>Meus Agendamentos</h3>
+    <h3><span class="dot"></span>Meus Agendamentos <button class="btn btn-grey sm" style="float:right" onclick="vegApptRefresh()">↻ Actualizar estado</button></h3>
     <div class="twrap"><table id="agTable"><tr><th>Serviço</th><th>Data / Hora</th><th>Local</th><th>Estado</th></tr></table></div>
   </div>
 </section>
@@ -728,10 +817,41 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
     <h3><span class="dot"></span>Minha Candidatura</h3>
     <div id="ptStatus"><div class="empty"><div class="big">🤝</div>Ainda não submeteu candidatura de parceria.</div></div>
   </div>
+</section>
+
+<!-- ========== PORTAL DO PARCEIRO (FASE 7 — BLOCO 3) ========== -->
+<section id="portal" class="scr">
+  <div class="crumb">Serviços / <b>Portal do Parceiro</b></div>
+  <h2 class="st">Portal do Parceiro</h2>
+  <p class="sb">Gestão da sua presença e actividade na plataforma VEG: pedidos recebidos, disponibilidade real, encomendas e indicadores de confiança. As decisões de elegibilidade são sempre da administração VEG.</p>
+  <div class="grid g4" style="margin-bottom:16px">
+    <div class="statx"><div class="v" id="ppNBook">0</div><div class="l">Pedidos recebidos</div></div>
+    <div class="statx"><div class="v" id="ppNOrd">0</div><div class="l">Encomendas</div></div>
+    <div class="statx"><div class="v" id="ppNAvl">0</div><div class="l">Agendas configuradas</div></div>
+    <div class="statx"><div class="v" id="ppNElig">—</div><div class="l">Elegibilidade</div></div>
+  </div>
+  <div class="card" id="ppElegCard">
+    <h3><span class="dot"></span>Estado da minha parceria</h3>
+    <div id="ppEleg"><div class="empty"><div class="big">🏢</div>A carregar o seu perfil de parceiro...</div></div>
+  </div>
+  <div class="card">
+    <h3><span class="dot"></span>Gestão</h3>
+    <div class="chips" style="margin-top:0">
+      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="ppTab('pedidos')">📅 Pedidos recebidos</span>
+      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="ppTab('encomendas')">📦 Encomendas</span>
+      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="ppTab('agenda')">🗓️ Disponibilidade</span>
+      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="ppTab('trust')">🛡️ Indicadores VEG TRUST</span>
+    </div>
+  </div>
+  <div class="card" id="ppBox"><h3><span class="dot"></span>Portal do Parceiro</h3><div class="empty"><div class="big">🏢</div>Escolha uma área acima.</div></div>
 </section><section id="financeiro" class="scr">
   <div class="crumb">Conta / <b>VEG Finance</b></div>
   <h2 class="st">Histórico Financeiro</h2>
   <p class="sb">Pagamentos, compras, encomendas, campanhas e recibos. Os dados sensíveis de cartão nunca são armazenados — o processamento é sempre do provedor de pagamento autorizado.</p>
+  <div class="card" style="border:1px dashed var(--gold);background:#FFFDF5">
+    <h3><span class="dot"></span>💳 VEG PAY — Preparação técnica</h3>
+    <p style="font-size:.82rem;color:var(--mut);margin:0 0 10px">O VEG PAY está em <b>preparação técnica</b> — ainda <b>não</b> está integrado nenhum gateway de pagamento. A activação real exigirá: provedor autorizado e credenciais confirmadas pela direcção VEG, estados de pagamento definidos (<i>iniciado → processando → confirmado | falhou → reembolsado</i>), processo de confirmação e reconciliação automática contra encomendas e liquidações, e tratamento de falhas com repetição controlada. Até lá, os pagamentos seguem o <b>Modelo A</b>: sinalização pelo cliente e confirmação manual pelo VEG ADMIN. Nenhum pagamento é apresentado como concluído sem confirmação no backend.</p>
+  </div>
   <div class="grid g4" style="margin-bottom:16px">
     <div class="statx"><div class="v" id="fnTotal">0 Kz</div><div class="l">Movimentado (registado)</div></div>
     <div class="statx"><div class="v" id="fnPend">0</div><div class="l">Pagamentos pendentes</div></div>
@@ -779,6 +899,11 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
     <p style="font-size:.75rem;color:var(--gold2);font-weight:700" id="pfRole"></p>
     <p style="font-size:.8rem;color:var(--mut);margin-top:4px">Nº VEG no portal: <b id="pfVegno" style="color:var(--gold2);letter-spacing:1px">—</b></p>
   </div>
+  <div class="card">
+    <h3><span class="dot"></span>🪪 VEG ID — Identidade Digital</h3>
+    <p style="font-size:.82rem;color:var(--mut);line-height:1.7">O VEG ID é a sua identidade central no ecossistema VEG. Uma única conta acumula perfis — <b>pessoal</b>, <b>profissional</b>, <b>empresarial</b> e <b>parceiro</b> — sem contas duplicadas.</p>
+    <div id="vegIdCard" style="margin-top:10px"></div>
+  </div>
   <div class="card" style="text-align:center">
     <h3 style="justify-content:center"><span class="dot"></span>Fotografia de Perfil</h3>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center">
@@ -803,6 +928,27 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
       <div class="fld"><label>Idade <span style="text-transform:none;color:#9AA7BC">(solicitada apenas quando necessária, ex.: segmentação de campanhas)</span></label><input id="pfIdade" type="number" min="13" max="120" placeholder="Opcional"></div>
       <button class="btn btn-gold" type="submit">💾 Guardar Alterações</button>
       <span id="pfStatus" style="margin-left:12px;font-size:.8rem;color:var(--green);font-weight:700"></span>
+    </form>
+  </div>
+  <div class="card">
+    <h3><span class="dot"></span>🧰 Perfil Profissional <span class="bdg b-p" style="font-size:.62rem">FASE 7</span></h3>
+    <div class="notice">Trabalha por conta própria? O perfil profissional liga-se ao seu VEG ID e prepara a sua presença no mercado VEG (especialidade, serviços, disponibilidade e portfólio). A publicação pública depende de verificação pela equipa VEG.</div>
+    <div id="prStatus" style="margin-bottom:10px"></div>
+    <form onsubmit="saveProfessional(event)">
+      <div class="frow">
+        <div class="fld"><label>Especialidade *</label><input id="prEsp" required placeholder="Ex.: Electricista, fotógrafo, contabilista..."></div>
+        <div class="fld"><label>Anos de experiência</label><input id="prExp" type="number" min="0" max="70" placeholder="Ex.: 5"></div>
+      </div>
+      <div class="fld"><label>Serviços que presta (separados por vírgula) *</label><input id="prServ" required placeholder="Ex.: instalação eléctrica, manutenção de quadros"></div>
+      <div class="frow3">
+        <div class="fld"><label>Província</label><select id="prProv"></select></div>
+        <div class="fld"><label>Município</label><input id="prMun" placeholder="Ex.: Talatona"></div>
+        <div class="fld"><label>Disponibilidade</label><input id="prDisp" placeholder="Ex.: Seg–Sáb, 08h–18h"></div>
+      </div>
+      <div class="fld"><label>Resumo profissional / bio</label><textarea id="prBio" rows="2" placeholder="Descreva a sua experiência e como trabalha..."></textarea></div>
+      <div class="fld"><label>Portfólio (links, separados por vírgula)</label><input id="prPort" placeholder="Ex.: instagram.com/..., drive.google.com/..."></div>
+      <div class="fld"><label>Visibilidade</label><select id="prVis"><option value="privado">Privado — só a VEG vê (até verificação)</option><option value="publico">Público — após verificação VEG</option></select></div>
+      <button class="btn btn-gold" type="submit">💾 Guardar Perfil Profissional</button>
     </form>
   </div>
   <div class="card">
@@ -992,8 +1138,12 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('pedidos')">📥 Pedidos & Solicitações</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('campanhas')">📣 Campanhas p/ aprovar</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('parceiros')">🤝 Parceiros p/ análise</span>
+      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('verificacoes')">🪪 Verificações (F7)</span>
+      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('oportunidades')">💡 Oportunidades (F7)</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('utilizadores')">👥 Utilizadores</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('tickets')">🎫 Tickets</span>       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('agendamentos')">📅 Agendamentos</span>       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('liquidacoes')">💰 Liquidações</span>
+      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('encomendas')">📦 Encomendas</span>
+      <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('regras')">📐 Regras Comerciais</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('financeiro')">💳 Finanças</span>       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('saldo')">💰 Saldo &amp; Preços</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('conteudos')">📄 Conteúdos</span>
       <span class="chipx" style="color:var(--navy);background:#F1ECDC;border-color:var(--gold)" onclick="adminTab('config')">⚙️ Configurações</span>
@@ -1017,7 +1167,7 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
   Missão: Garantir qualidade técnica e profissional na resolução dos principais desafios empresariais, sociais e culturais.<br>
   Valores: Qualidade · Profissionalismo · Inovação · Integridade · Sustentabilidade · Responsabilidade · Orientação para resultados<br>
   © 2026 VEG APP — O seu escritório virtual de negócios, serviços e soluções.<br>
-  <span id="verTag" style="display:inline-block;margin-top:6px;padding:3px 14px;border-radius:12px;background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.5);color:#D4AF37;font-size:.72rem;letter-spacing:1px">⚙️ VERSÃO FASE 2 · Rede de Parceiros VEG activa</span>
+  <span id="verTag" style="display:inline-block;margin-top:6px;padding:3px 14px;border-radius:12px;background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.5);color:#D4AF37;font-size:.72rem;letter-spacing:1px">⚙️ VERSÃO FASE 7 · BLOCO 3 — PORTAL DO PARCEIRO · DISPONIBILIDADE REAL · VEG TRUST · REGRAS COMERCIAIS</span>
 </footer>
 </div>
 <div id="toasts"></div>
@@ -1064,21 +1214,30 @@ function defaultDB(){return {
  cfg:{gsUrl:'',email:'vozempreendedoraglobal@gmail.com',apiUrl:'',campPrice:1350},
  counters:{sol:1,order:1,ticket:1},
  users:[
-  {id:'u_admin',name:'André Judith Chindacata',email:'vozempreendedoraglobal@gmail.com',phone:'+244 933 803 862',pass:'VEG'+'2026#',role:'superadmin',active:true,created:Date.now(),interests:'',profession:'Director Geral VEG',province:'Luanda',idade:''},
-  {id:'u_demo',name:'Maria dos Santos',email:'maria@exemplo.com',phone:'+244 923 111 222',pass:'demo123',role:'business',active:true,created:Date.now(),interests:'empreededorismo, tecnologia',profession:'Comerciante',province:'Luanda',idade:''}
+  /* S-01 (Fase 7): a senha do superadmin NUNCA fica no código-fonte. A conta
+     é semeada sem senha local; o primeiro login em cada dispositivo é validado
+     no backend central (vegRemoteLogin/authLogin), que confirma o passHash
+     registado no Google Sheets. */
+  {id:'u_admin',name:'André Judith Chindacata',email:'vozempreendedoraglobal@gmail.com',phone:'+244 933 803 862',role:'superadmin',active:true,created:Date.now(),interests:'',profession:'Director Geral VEG',province:'Luanda',idade:''},
+  {id:'u_demo',name:'Maria dos Santos',email:'maria@exemplo.com',phone:'+244 923 111 222',pass:'demo123',role:'business',active:true,created:Date.now(),interests:'empreededorismo, tecnologia',profession:'Comerciante',province:'Luanda',idade:'',testData:true}   /* A-06: TEST_DATA */
  ],
  session:null,
  businesses:[
-  {id:'b1',userId:'u_demo',name:'Padaria Bom Sabor',nif:'5410000123',desc:'Padaria artesanal com entregas em Luanda. Bolos personalizados, pão fresco e catering para eventos.',cat:'Alimentação',province:'Luanda',city:'Viana',address:'Rua 12, Viana',hor:'Seg–Sáb, 06h–19h',whatsapp:'+244 923 111 222',email:'maria@exemplo.com',web:'',logo:'',active:true},
-  {id:'b2',userId:'',name:'TechFix Angola',nif:'5410000456',desc:'Reparação de telemóveis, computadores, instalação de redes e manutenção tecnológica.',cat:'Tecnologia',province:'Luanda',city:'Talatona',address:'Centralidade do Kilamba',hor:'Seg–Sex, 08h–17h',whatsapp:'+244 923 333 444',email:'',web:'',logo:'',active:true}
+  {id:'b1',userId:'u_demo',testData:true,name:'Padaria Bom Sabor',nif:'5410000123',desc:'Padaria artesanal com entregas em Luanda. Bolos personalizados, pão fresco e catering para eventos.',cat:'Alimentação',province:'Luanda',city:'Viana',address:'Rua 12, Viana',hor:'Seg–Sáb, 06h–19h',whatsapp:'+244 923 111 222',email:'maria@exemplo.com',web:'',logo:'',active:true},
+  {id:'b2',userId:'',testData:true,name:'TechFix Angola',nif:'5410000456',desc:'Reparação de telemóveis, computadores, instalação de redes e manutenção tecnológica.',cat:'Tecnologia',province:'Luanda',city:'Talatona',address:'Centralidade do Kilamba',hor:'Seg–Sex, 08h–17h',whatsapp:'+244 923 333 444',email:'',web:'',logo:'',active:true}
  ],
  products:[
-  {id:'p1',bizId:'b1',userId:'u_demo',name:'Bolo de aniversário personalizado',type:'Produto',price:25000,desc:'A partir de 1kg, vários sabores e decorações.',img:''},
-  {id:'p2',bizId:'b1',userId:'u_demo',name:'Cesta de pequeno-almoço',type:'Produto',price:18000,desc:'Pão fresco, sumo natural e fruta da época.',img:''},
-  {id:'p3',bizId:'b2',userId:'',name:'Troca de visor (telemóvel)',type:'Serviço',price:15000,desc:'Visores originais e compatíveis, com garantia.',img:''},
-  {id:'p4',bizId:'b2',userId:'',name:'Limpeza e manutenção de computador',type:'Serviço',price:10000,desc:'Formatação, remoção de vírus e optimização.',img:''}
+  /* FASE 7 — Bloco 2 (P7): produtos passam a ter stock e estado
+     (rascunho/ativo/pausado/esgotado/removido) — a encomenda valida e
+     debita o stock NO SERVIDOR (placeOrder). */
+  {id:'p1',bizId:'b1',userId:'u_demo',testData:true,name:'Bolo de aniversário personalizado',type:'Produto',price:25000,desc:'A partir de 1kg, vários sabores e decorações.',img:'',status:'ativo',stock:20},
+  {id:'p2',bizId:'b1',userId:'u_demo',testData:true,name:'Cesta de pequeno-almoço',type:'Produto',price:18000,desc:'Pão fresco, sumo natural e fruta da época.',img:'',status:'ativo',stock:15},
+  {id:'p3',bizId:'b2',userId:'',testData:true,name:'Troca de visor (telemóvel)',type:'Serviço',price:15000,desc:'Visores originais e compatíveis, com garantia.',img:'',status:'ativo',stock:null},
+  {id:'p4',bizId:'b2',userId:'',testData:true,name:'Limpeza e manutenção de computador',type:'Serviço',price:10000,desc:'Formatação, remoção de vírus e optimização.',img:'',status:'ativo',stock:null}
  ],
- leads:[], orders:[], sols:[], docs:[], camps:[], appts:[], partners:[], tickets:[], msgs:[], notifs:[], payments:[], logs:[]
+ leads:[], orders:[], sols:[], docs:[], camps:[], appts:[], partners:[], tickets:[], msgs:[], notifs:[], payments:[], logs:[], professionals:[], availability:[],
+ commercialRules:[],
+ opportunities:[]   /* FASE 7 — Bloco 1 (P6) · Bloco 2 (P10) */
 };}
 function loadDB(){try{db=JSON.parse(localStorage.getItem(DB_KEY));}catch(e){db=null;}if(!db||!db.users){db=defaultDB();saveDB();}}
 function saveDB(){localStorage.setItem(DB_KEY,JSON.stringify(db));try{if(typeof VEG_SYNC!=='undefined')VEG_SYNC.onLocalSave();}catch(e){}}
@@ -1096,6 +1255,12 @@ db.partners.forEach(p=>{if(p.status==='ativo'&&p.validUntil&&p.validUntil<_today
 if(!db.wallets){db.wallets={};}
 if(!db.indications){db.indications=[];}
 if(!db.chats){db.chats=[];}
+if(!db.professionals){db.professionals=[];}   /* FASE 7 — Bloco 1 */
+/* FASE 7 — Bloco 2 (P10): oportunidades de negócio (folha VEG_Opportunities) */
+if(!db.opportunities){db.opportunities=[];}
+/* FASE 7 — Bloco 2 (P7): produtos sem estado/stock herdam o comportamento
+   anterior — activos e sem limite de stock. */
+db.products.forEach(function(p){if(p.status===undefined)p.status='ativo';if(p.stock===undefined)p.stock=null;});
 if(!db.counters.vegNum){db.counters.vegNum=1;}
 db.users.forEach(function(u){if(!u.vegno){u.vegno=String(db.counters.vegNum++).padStart(6,'0');}});saveDB();
 
@@ -1112,7 +1277,11 @@ function currentUser(){return db.session?db.users.find(u=>u.id===db.session.uid)
 function role(){const u=currentUser();return u?u.role:'visitante';}
 function isAdmin(){const r=role();return r==='admin'||r==='superadmin';}
 function requireLogin(){if(currentUser())return true;toast('🔐 Inicie sessão ou crie uma conta para continuar.','er');authTab('login');$('#auth').classList.remove('hidden');$('#shell').classList.add('hidden');return false;}
-function notify(userId,text){if(!userId)return;db.notifs.unshift({id:uid(),userId,text,at:Date.now(),read:false});saveDB();renderBadges();}
+function notify(userId,text,id){if(!userId)return;db.notifs.unshift({id:id||uid(),userId,text,at:Date.now(),read:false});saveDB();renderBadges();}
+/* Garantia server-side (Fase 6): regista a notificação directamente no
+   backend, para que chegue ao utilizador mesmo que o push local do admin
+   falhe. Idempotente: usa o MESMO id da notificação local (upsert por id). */
+function vegNotifyRemote(userId,text,id){try{if(typeof VEG_CONFIG!=='undefined'&&VEG_CONFIG.API_URL&&typeof VEG_API!=='undefined')VEG_API.post('notifyUser',{id:id||uid(),userId:userId,text:text});}catch(e){}}
 function logAction(action,target){db.logs.unshift({id:uid(),actor:currentUser()?currentUser().email:'visitante',action,target,at:Date.now()});saveDB();}
 function fillProvinces(sel,keep){const el=typeof sel==='string'?$(sel):sel;if(!el)return;const v=keep?el.value:el.value;el.innerHTML='<option value="">Seleccionar...</option>'+PROVINCIAS.map(p=>'<option>'+p+'</option>').join('');if(v)el.value=v;}
 function fileToData(file,cb,max){max=max||5*1024*1024;if(!file)return cb('');if(file.size>max){toast('Ficheiro demasiado grande (máx. 5 MB nesta versão).','er');return cb('');}const r=new FileReader();r.onload=e=>cb(e.target.result);r.readAsDataURL(file);}
@@ -1144,6 +1313,9 @@ const VEG_API = {
 
   async request(action, payload){
     payload = payload || {};
+    /* FASE 7 — Bloco 1 (B-01): anexa o token de sessão a TODOS os pedidos;
+       o backend resolve a identidade e o papel no servidor, nunca no cliente. */
+    try{const _tk=(typeof vegToken==='function')?vegToken():null;if(_tk&&!payload.auth)payload.auth={token:_tk};}catch(e){}
     if (!VEG_CONFIG.API_URL){
       console.warn('[VEG API] API_URL nao configurada. Dados mantidos apenas em localStorage.');
       return { success:false, data:null,
@@ -1225,7 +1397,10 @@ function _vegSanitize(rec){
 }
 
 const VEG_SYNC = {
-  COLLECTIONS:['users','partners','appts','payments','settlements','wallets','notifs','logs','businesses','products','sols','orders','tickets','camps','indications'],
+  /* A-03 (Fase 7): leads, docs, msgs e chats passam a sincronizar com o
+     backend central (antes existiam apenas no dispositivo). Requer o
+     Code.gs actualizado com as folhas VEG_Leads/VEG_Docs/VEG_Msgs/VEG_Chats. */
+  COLLECTIONS:['users','partners','appts','payments','settlements','wallets','notifs','logs','businesses','products','sols','orders','tickets','camps','indications','leads','docs','msgs','chats','professionals','opportunities','availability','commercialRules'],
   state:'local',           // local | syncing | synced | error
   _dirty:false,
   _pushing:false,
@@ -1304,6 +1479,9 @@ const VEG_SYNC = {
   async pushNow(){
     if(this._pushing)return{success:false,error:{code:'BUSY'}};
     if(!VEG_CONFIG.API_URL){this.setState('local');return{success:false,error:{code:'NOT_CONFIGURED'}};}
+    /* FASE 7: syncDelta exige sessão com token — obtém-se silenciosamente
+       a partir da senha local antes de enviar. */
+    if(typeof vegToken==='function'&&!vegToken()&&typeof currentUser==='function'&&currentUser()){try{await vegObtainSession(currentUser());}catch(e){}}
     this._pushing=true;this.setState('syncing');
     const started=Date.now();
     const cols={};
@@ -1316,6 +1494,12 @@ const VEG_SYNC = {
     this.techLog('syncDelta',res.success,res.error&&res.error.code,Date.now()-started);
     this._pushing=false;
     if(res.success){this._dirty=false;this.setState('synced');}
+    else if(res.error&&(res.error.code==='AUTH_REQUIRED'||res.error.code==='SESSION_EXPIRED')){
+      /* FASE 7: sessão ausente/expirada — limpa o token; a próxima escrita
+         obtém nova sessão silenciosamente. Não é falha de rede. */
+      if(db.session){delete db.session.token;delete db.session.exp;}
+      this.setState('local');
+    }
     else{
       this.setState('error');
       if(res.error&&res.error.code!=='NOT_CONFIGURED')
@@ -1324,10 +1508,16 @@ const VEG_SYNC = {
     return res;
   },
 
-  /* ---------- leitura do backend → cache local; o backend prevalece (Fase 6.8) ---------- */
-  async pull(){
+  /* ---------- leitura do backend → cache local; o backend prevalece (Fase 6.8) ----------
+     opts.silent=true: funde sem re-renderizar (usado pelo polling periódico,
+     que só re-renderiza se os dados do utilizador mudaram de facto). */
+  async pull(opts){
     if(!VEG_CONFIG.API_URL){this.setState('local');return{success:false,error:{code:'NOT_CONFIGURED'}};}
+    const silent=!!(opts&&opts.silent);
     const started=Date.now();
+    /* FASE 7: dados privados exigem sessão válida no backend — obter token
+       antes do snapshot quando houver utilizador autenticado. */
+    if(typeof vegToken==='function'&&!vegToken()&&typeof currentUser==='function'&&currentUser()){try{await vegObtainSession(currentUser());}catch(e){}}
     const res=await VEG_API.post('getSnapshot',{userId:(db.session&&db.session.uid)||null,role:(typeof role==='function'?role():'visitante')});
     this.techLog('getSnapshot',res.success,res.error&&res.error.code,Date.now()-started);
     if(res.success&&res.data){
@@ -1335,9 +1525,49 @@ const VEG_SYNC = {
       this.mergeSnapshot(cols);
       try{localStorage.setItem(DB_KEY,JSON.stringify(db));}catch(e){}
       this._writeCacheMeta();
-      try{if(!document.getElementById('shell').classList.contains('hidden')&&typeof renderAll==='function')renderAll();}catch(e){}
+      if(!silent){try{if(!document.getElementById('shell').classList.contains('hidden')&&typeof renderAll==='function')renderAll();}catch(e){}}
     }
     return res;
+  },
+
+  /* ---------- polling periódico: entrega aprovações/saldos/notificações ----------
+     em tempo quase real aos utilizadores com sessão iniciada (Fase 6.14). */
+  _pollTimer:null,
+  _seenNotifs:{},
+  _initSeenNotifs(){const u=(typeof currentUser==='function')?currentUser():null;if(!u)return;db.notifs.forEach(function(n){if(n.userId===u.id)VEG_SYNC._seenNotifs[n.id]=1;});},
+  startPolling(){
+    if(this._pollTimer)return;
+    const self=this;
+    setTimeout(function(){self._initSeenNotifs();},5000);
+    this._pollTimer=setInterval(function(){
+      try{
+        if(document.hidden)return;
+        if(typeof currentUser!=='function'||!currentUser())return;
+        if(!VEG_CONFIG.API_URL)return;
+        self.pollPull();
+      }catch(e){}
+    },30000);
+  },
+  async pollPull(){
+    const u=(typeof currentUser==='function')?currentUser():null;
+    if(!u)return;
+    const fingerprint=function(){
+      const w=(db.wallets&&db.wallets[u.id])||null;
+      return JSON.stringify([w?{b:w.balance,r:w.reserved,u:w.used}:null,db.notifs.filter(function(n){return n.userId===u.id;}).slice(0,25)]);
+    };
+    const before=fingerprint();
+    const res=await this.pull({silent:true});
+    if(!res.success)return;
+    if(fingerprint()===before)return;   /* nada mudou para este utilizador */
+    try{if(typeof renderAll==='function')renderAll();}catch(e){}
+    try{if(typeof renderBadges==='function')renderBadges();}catch(e){}
+    const self=this;
+    db.notifs.forEach(function(n){
+      if(n.userId!==u.id||n.read)return;
+      if(self._seenNotifs[n.id])return;
+      self._seenNotifs[n.id]=1;
+      if(typeof toast==='function')toast(n.text,'ok');
+    });
   },
 
   mergeSnapshot(cols){
@@ -1347,6 +1577,15 @@ const VEG_SYNC = {
     let n=0;
     Object.keys(cols).forEach(function(k){
       const remote=cols[k];
+      if(k==='wallets'){
+        /* A carteira é um OBJECTO indexado por userId no frontend; o backend
+           envia uma lista de linhas (id 'W-<userId>'). Reconverter para
+           objecto para não corromper o saldo local. */
+        const obj={};
+        if(Array.isArray(remote))remote.forEach(function(r){if(r&&r.userId)obj[r.userId]=r;});
+        else if(remote&&typeof remote==='object')Object.assign(obj,remote);
+        db.wallets=obj;n+=Object.keys(obj).length;return;
+      }
       if(Array.isArray(remote)){
         if(!Array.isArray(db[k]))db[k]=[];
         const map={};
@@ -1374,6 +1613,7 @@ const VEG_SYNC = {
       if(!document.hidden&&self._dirty)self.pushNow();
     });
     setInterval(function(){if(self._dirty&&!self._pushing)self.pushNow();},60000);
+    this.startPolling();
     if(!VEG_CONFIG.API_URL){this.setState('local');return;}
     this.setState('syncing');
     const res=await this.pull();
@@ -1727,7 +1967,9 @@ function adCreditUser(){
  const w=ensureWallet(u);const before=w.balance;
  vegCreditWallet(u,amount,'Kz','ADM-'+uid(),'Crédito manual: '+reason);
  auditLog('credito_manual',u.email+' ('+u.name+')',fmtMoney(before,'Kz'),fmtMoney(w.balance,'Kz'),reason);
- notify(u.id,'💰 Foi creditado '+fmtMoney(amount,'Kz')+' na sua conta. Motivo: '+reason);
+ const nid=uid();
+ notify(u.id,'💰 Foi creditado '+fmtMoney(amount,'Kz')+' na sua conta. Motivo: '+reason,nid);
+ vegNotifyRemote(u.id,'💰 Foi creditado '+fmtMoney(amount,'Kz')+' na sua conta. Motivo: '+reason,nid);
  logAction('Crédito manual de saldo',u.email+' +'+fmtMoney(amount,'Kz'));saveDB();toast('Saldo creditado.','ok');adShowUser();}
 function adAdjustUser(){
  if(!isAdmin())return;
@@ -1824,7 +2066,7 @@ function authTab(t){['login','reg','rec'].forEach(x=>{$('#f'+x[0].toUpperCase()+
 function doLogin(e){e.preventDefault();const c=$('#liContacto').value.trim().toLowerCase(),p=$('#liSenha').value;
  if(!p){$('#authErr').textContent='⚠️ Insira a sua senha para iniciar sessão.';$('#authErr').style.display='block';return;}
  const u=db.users.find(x=>(x.email.toLowerCase()===c||x.phone===c)&&x.pass===p);
- if(u){if(u.active===false){$('#authErr').textContent='Conta suspensa. Contacte o atendimento VEG.';$('#authErr').style.display='block';return;}startLogin(u);return;}
+ if(u){if(u.active===false){$('#authErr').textContent='Conta suspensa. Contacte o atendimento VEG.';$('#authErr').style.display='block';return;}startLogin(u);vegObtainSession(u);return;}
  /* FASE 6 — a conta não existe no cache DESTE dispositivo: validar no backend
     central (Google Sheets), para que contas criadas noutro dispositivo
     funcionem em qualquer navegador. Sem esta validação remota, novos
@@ -1844,7 +2086,7 @@ async function vegRemoteLogin(c,p){
   }else{nu.pass=p;if(hash)nu.passHash=hash;if(ru.active!==undefined)nu.active=ru.active;}
   logAction('Login via backend central (novo dispositivo)',nu.email);
   try{await VEG_SYNC.pull();}catch(e){}
-  startLogin(nu);return;
+  startLogin(nu,res.data.session||null);return;
  }
  if(res.error&&res.error.code==='ACCOUNT_SUSPENDED'){err('Conta suspensa. Contacte o atendimento VEG.');return;}
  if(res.error&&res.error.code==='BACKEND_OFFLINE'){err('Sem ligação ao servidor. Tente novamente com ligação à internet.');return;}
@@ -1873,14 +2115,41 @@ async function vegEnsurePassHashes(){
   if(changed)saveDB();
  }catch(e){}
 }
+/* ================= FASE 7 — BLOCO 1: SESSÃO COM TOKEN =================
+   authLogin (backend) emite um token com validade (folha VEG_Sessions); o
+   token fica na sessão local e é anexado a todos os pedidos. Se o backend
+   estiver offline, a app continua a funcionar em modo cache local. */
+function vegToken(){try{const s=db.session;if(s&&s.token&&s.exp&&+s.exp>Date.now())return s.token;}catch(e){}return null;}
+function vegAttachSession(sess){if(!db.session)return;if(sess&&sess.token){db.session.token=sess.token;db.session.exp=Date.parse(sess.expiresAt)||(Date.now()+30*864e5);}}
+/* Obtém (ou renova) a sessão central a partir da senha local — silencioso. */
+async function vegObtainSession(u){
+ if(!u||!u.pass||!VEG_CONFIG.API_URL)return;
+ try{
+  const hash=u.passHash||await vegHash(u.pass);
+  if(!hash)return;
+  const res=await VEG_API.post('authLogin',{contacto:u.email||u.phone,senhaHash:hash});
+  if(res.success&&res.data&&res.data.session&&db.session&&db.session.uid===u.id){vegAttachSession(res.data.session);saveDB();}
+ }catch(e){}
+}
+/* Registo central: cria a conta no backend (authRegister), obtém a sessão e
+   só depois empurra o delta — a partir da Fase 7 o syncDelta exige token. */
+async function vegRegisterRemote(u){
+ if(!VEG_CONFIG.API_URL)return;
+ try{
+  const clean=_vegSanitize(u);
+  await VEG_API.post('authRegister',{user:clean});
+  await vegObtainSession(u);
+  try{VEG_SYNC.pushNow();}catch(e){}
+ }catch(e){}
+}
 function doRegister(e){e.preventDefault();if($('#rgSenha').value!==$('#rgSenha2').value){$('#authErr').textContent='As senhas não coincidem.';$('#authErr').style.display='block';return;}
  const email=$('#rgEmail').value.trim().toLowerCase();if(db.users.some(u=>u.email.toLowerCase()===email)){$('#authErr').textContent='Já existe uma conta com este e-mail.';$('#authErr').style.display='block';return;}
  const u={id:uid(),name:$('#rgNome').value.trim(),email:email,phone:$('#rgTel').value.trim(),pass:$('#rgSenha').value,role:'user',active:true,created:Date.now(),interests:'',profession:'',province:'',idade:'',vegno:String(db.counters.vegNum++).padStart(6,'0')};
  while(db.users.some(x=>x.vegno===u.vegno)){u.vegno=String(db.counters.vegNum++).padStart(6,'0');}
  vegHash(u.pass).then(function(h){u.passHash=h;
- fileToData($('#rgFoto').files[0],d=>{if(d)u.photo=d;db.users.push(u);db.session={uid:u.id};logAction('Registo de novo utilizador',u.email);const refCode=($('#rgRef')?$('#rgRef').value:'').trim().toUpperCase();if(refCode){const inv=db.users.find(x=>indicaCode(x)===refCode);if(inv&&inv.id!==u.id){db.indications.push({id:uid(),inviterId:inv.id,inviteeName:u.name,inviteeEmail:u.email,at:Date.now()});notify(inv.id,'🎉 '+u.name+' inscreveu-se na VEG APP com o seu código VEG INDICA!');logAction('Inscrição via VEG INDICA',refCode);}}ensureWallet(u);pushData({tipo:'novo_utilizador',...u,pass:undefined});saveDB();try{VEG_SYNC.pushNow();}catch(e){}enterApp();toast('Conta criada com sucesso!','ok');});});}
-function startLogin(u){if(u.tfa){const code=String(Math.floor(100000+Math.random()*900000));db.otp={uid:u.id,code,exp:Date.now()+5*60*1000};saveDB();otpModal(u);}else finishLogin(u);}
-function finishLogin(u){db.session={uid:u.id};logAction('Login'+(u.tfa?' (2FA)':''),u.email);saveDB();try{VEG_SYNC.pull();}catch(e){}enterApp();toast('Bem-vindo(a), '+u.name.split(' ')[0]+'!','ok');}
+ fileToData($('#rgFoto').files[0],d=>{if(d)u.photo=d;db.users.push(u);db.session={uid:u.id};logAction('Registo de novo utilizador',u.email);const refCode=($('#rgRef')?$('#rgRef').value:'').trim().toUpperCase();if(refCode){const inv=db.users.find(x=>indicaCode(x)===refCode);if(inv&&inv.id!==u.id){db.indications.push({id:uid(),inviterId:inv.id,inviteeName:u.name,inviteeEmail:u.email,at:Date.now()});notify(inv.id,'🎉 '+u.name+' inscreveu-se na VEG APP com o seu código VEG INDICA!');logAction('Inscrição via VEG INDICA',refCode);}}ensureWallet(u);pushData({tipo:'novo_utilizador',...u,pass:undefined});saveDB();vegRegisterRemote(u);enterApp();toast('Conta criada com sucesso!','ok');});});}
+function startLogin(u,sess){window._vegSess=sess||null;if(u.tfa){const code=String(Math.floor(100000+Math.random()*900000));db.otp={uid:u.id,code,exp:Date.now()+5*60*1000};saveDB();otpModal(u);}else finishLogin(u);}
+function finishLogin(u){db.session={uid:u.id};vegAttachSession(window._vegSess);window._vegSess=null;logAction('Login'+(u.tfa?' (2FA)':''),u.email);saveDB();try{VEG_SYNC.pull();}catch(e){}enterApp();toast('Bem-vindo(a), '+u.name.split(' ')[0]+'!','ok');}
 function otpModal(u){modalT('🔐 Verificação em dois passos','<p style="font-size:.83rem;color:var(--mut);margin-bottom:10px;line-height:1.6">Foi gerado um código de 6 dígitos para <b>'+esc(u.email)+'</b>. <span class="bdg b-p">Válido por 5 minutos · uso único</span><br><small>Em produção, o código é enviado por SMS/WhatsApp (API) — <b>DEPENDÊNCIA EXTERNA</b>. Nesta versão de demonstração, o código é: <b style="color:var(--gold2);letter-spacing:2px">'+db.otp.code+'</b></small></p><div class="fld"><label>Código de verificação</label><input id="otpIn" maxlength="6" inputmode="numeric" placeholder="••••••" onkeydown="if(event.key===\'Enter\')verifyOtp()"></div><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn btn-gold sm" onclick="verifyOtp()">✔ Verificar e entrar</button><button class="btn btn-grey sm" onclick="resendOtp()">🔁 Novo código</button><button class="btn btn-red sm" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove());">Cancelar</button></div><p style="font-size:.7rem;color:#9AA7BC;margin-top:10px">As tentativas falhadas ficam registadas nos logs de segurança.</p>');
  setTimeout(()=>{const i=document.getElementById('otpIn');if(i)i.focus();},80);}
 function verifyOtp(){const o=db.otp;if(!o||Date.now()>o.exp){toast('Código expirado. Gere um novo.','er');return;}const v=document.getElementById('otpIn').value.trim();if(v!==o.code){toast('Código incorrecto. Tentativa registada nos logs.','er');const uu=db.users.find(x=>x.id===o.uid);if(uu)logAction('Falha de verificação 2FA',uu.email);return;}const u=db.users.find(x=>x.id===o.uid);db.otp=null;document.querySelectorAll('.mback').forEach(m=>m.remove());finishLogin(u);}
@@ -1889,10 +2158,10 @@ function toggleTFA(){const u=currentUser();if(!u)return;u.tfa=!u.tfa;logAction(u
 function renderTfaRow(){const u=currentUser();if(!u)return;const el=document.getElementById('tfaRow');if(!el)return;el.innerHTML='🔐 Verificação em dois passos (2FA): <b>'+(u.tfa?'<span class="bdg b-g">ACTIVA</span>':'<span class="bdg b-grey">INACTIVA</span>')+'</b> &nbsp;·&nbsp; <a style="color:var(--blue);cursor:pointer" onclick="toggleTFA()">'+(u.tfa?'Desactivar':'Activar')+'</a>';}
 function doRecover(e){e.preventDefault();const c=$('#rcContacto').value.trim().toLowerCase();const u=db.users.find(x=>x.email.toLowerCase()===c||x.phone===c);if(u){logAction('Recuperação de senha solicitada',u.email);toast('Se o contacto estiver registado, receberá instruções de recuperação. Num sistema com backend, este fluxo envia e-mail/SMS real.','ok');}else{toast('Contacto não encontrado.','er');}}
 function enterAsVisitor(){db.session=null;logAction('Acesso como visitante','-');saveDB();enterApp();toast('Modo visitante: consulta pública limitada. Crie conta para aceder a tudo.','ok');}
-function doLogout(){logAction('Logout',currentUser()?currentUser().email:'-');db.session=null;adminUnlocked=false;scrHistory.length=0;saveDB();$('#liContacto').value='';$('#liSenha').value='';$('#shell').classList.add('hidden');$('#auth').classList.remove('hidden');}
+function doLogout(){try{if(db.session&&db.session.token&&typeof VEG_API!=='undefined')VEG_API.post('authLogout',{});}catch(e){}logAction('Logout',currentUser()?currentUser().email:'-');db.session=null;adminUnlocked=false;scrHistory.length=0;saveDB();$('#liContacto').value='';$('#liSenha').value='';$('#shell').classList.add('hidden');$('#auth').classList.remove('hidden');}
 
 /* ================= SHELL / NAV ================= */
-function enterApp(){$('#auth').classList.add('hidden');$('#shell').classList.remove('hidden');document.body.classList.toggle('is-admin',isAdmin());scrHistory.length=0;updNavBtns();const u=currentUser();$('#uName').textContent=u?u.name.split(' ')[0]:'Visitante';$('#uAv').innerHTML=u&&u.photo?'<img src="'+u.photo+'">':esc((u?u.name:'V')[0].toUpperCase());$('#umNome').textContent=u?u.name:'Visitante';$('#umMail').textContent=u?u.email:'Sessão pública';$('#umRole').textContent=u?ROLE_NAMES[u.role]:'';fillProvinces('#bzProv');fillProvinces('#sqProv');fillProvinces('#cpProv');fillProvinces('#ptProv');fillProvinces('#pfProvIn');applyNavRoles();go('inicio');renderAll();}
+function enterApp(){$('#auth').classList.add('hidden');$('#shell').classList.remove('hidden');document.body.classList.toggle('is-admin',isAdmin());scrHistory.length=0;updNavBtns();const u=currentUser();$('#uName').textContent=u?u.name.split(' ')[0]:'Visitante';$('#uAv').innerHTML=u&&u.photo?'<img src="'+u.photo+'">':esc((u?u.name:'V')[0].toUpperCase());$('#umNome').textContent=u?u.name:'Visitante';$('#umMail').textContent=u?u.email:'Sessão pública';$('#umRole').textContent=u?ROLE_NAMES[u.role]:'';fillProvinces('#bzProv');fillProvinces('#sqProv');fillProvinces('#cpProv');fillProvinces('#ptProv');fillProvinces('#pfProvIn');fillProvinces('#prProv');fillProvinces('#vqProv');fillProvinces('#vmProv');fillProvinces('#oppProv');applyNavRoles();go('inicio');renderAll();}
 function applyNavRoles(){const r=role();$$('nav a[data-s]').forEach(a=>{const min=a.dataset.min;let show=true;if(min==='user'&&r==='visitante')show=false;if(min==='admin'&&!isAdmin())show=false;if(min==='staff'&&!(isAdmin()||role()==='staff'))show=false;a.style.display=show?'flex':'none';});}
 function go(s){const a=document.querySelector('nav a[data-s="'+s+'"]');if(!a)return;if(a.dataset.min==='user'&&!currentUser()){if(!requireLogin())return;}if(a.dataset.min==='admin'){if(!isAdmin()){toast('⛔ Acesso restrito ao VEG ADMIN.','er');logAction('Tentativa de acesso indevido ao VEG ADMIN',s);return;}if(!adminUnlocked){adminGate(s);return;}}
  if(a.dataset.min==='staff'&&!(isAdmin()||role()==='staff')){toast('⛔ Área reservada à equipa interna VEG.','er');logAction('Tentativa de acesso ao Chat Equipa',s);return;}
@@ -1940,13 +2209,22 @@ function vegSmart(){const q=$('#smartQ').value.trim();const box=$('#smartBox'),o
 function prefillSolic(eixo,serv){if(!requireLogin())return;go('solucoes');if(eixo)$('#sqEixo').value='Eixo '+eixo;if(serv)$('#sqServ').value=serv;$('#sqDesc').value=$('#smartQ').value;toast('Formulário pré-preenchido pelo VEG SMART.','ok');}
 
 /* ================= RENDER GERAL ================= */
-function renderAll(){renderBadges();['inicio','negocio','solucoes','documentos','crm','mensagens','market','marketing','agenda','mapa','viagens','parceiros','financeiro','suporte','perfil','indica','saldo','chatequipa','admin'].forEach(renderScreen);}
-function renderScreen(s){({inicio:renderInicio,negocio:renderNegocio,solucoes:renderSolucoes,documentos:renderDocHist,crm:renderCRM,mensagens:renderMsgs,market:renderMarket,marketing:renderMarketing,agenda:renderAgenda,mapa:renderMap,viagens:renderViagens,parceiros:renderParceiros,financeiro:renderFinance,suporte:renderTickets,perfil:renderPerfil,indica:renderIndica,saldo:renderSaldo,smart:renderSmart,objetivos:renderObjetivos,chatequipa:renderChat,admin:renderAdmin}[s]||(()=>{}))();}
+function renderAll(){renderBadges();['inicio','negocio','solucoes','documentos','crm','mensagens','market','pesquisa','oportunidades','marketing','agenda','mapa','viagens','parceiros','financeiro','suporte','perfil','indica','saldo','chatequipa','admin'].forEach(renderScreen);}
+function renderScreen(s){({inicio:renderInicio,negocio:renderNegocio,solucoes:renderSolucoes,documentos:renderDocHist,crm:renderCRM,mensagens:renderMsgs,market:renderMarket,pesquisa:renderSearch,oportunidades:renderOpps,marketing:renderMarketing,agenda:renderAgenda,mapa:renderMap,viagens:renderViagens,parceiros:renderParceiros,financeiro:renderFinance,suporte:renderTickets,perfil:renderPerfil,indica:renderIndica,saldo:renderSaldo,smart:renderSmart,objetivos:renderObjetivos,chatequipa:renderChat,admin:renderAdmin,portal:renderPortal}[s]||(()=>{}))();}
 function renderInicio(){const u=currentUser();$('#helloUser').textContent=u?'Olá, '+u.name.split(' ')[0]+' — o que vamos resolver hoje?':'Bem-vindo à VEG APP';
  const sols=u?db.sols.filter(x=>x.userId===u.id):[];$('#homeSolic').innerHTML=sols.length?sols.slice(0,5).map(x=>'<div class="kv"><span><b>'+esc(x.code)+'</b> — '+esc(x.eixo)+'</span><b>'+esc(x.status)+'</b></div>').join(''):'<div class="empty"><div class="big">📨</div>Ainda não fez solicitações.</div>';
  const ords=u?db.orders.filter(x=>x.userId===u.id):[];$('#homeOrders').innerHTML=ords.length?ords.slice(0,5).map(x=>'<div class="kv"><span><b>'+esc(x.code)+'</b> — '+x.items.length+' item(ns)</span><b>'+fmtKz(x.total)+'</b></div>').join(''):'<div class="empty"><div class="big">📦</div>Sem pedidos registados.</div>';
  $('#homeFeat').innerHTML=db.products.slice(0,3).map(p=>mkCard(p)).join('')||'<div class="empty">Sem ofertas.</div>';}
-function mkCard(p){const b=db.businesses.find(x=>x.id===p.bizId);return '<div class="mkcard"><div class="img">'+(p.img?(/video/.test(p.img)?'<video src="'+p.img+'" muted></video>':'<img src="'+p.img+'">'):'🛍️')+'</div><div class="bd"><b>'+esc(p.name)+'</b><div class="pr">'+fmtKz(p.price)+'</div><small>'+esc(p.desc||'')+'</small><small style="margin-top:5px;color:var(--gold2);font-weight:700">'+(b?esc(b.name):'VEG Market')+' · '+(b?esc(b.province):'')+'</small></div><div class="ft"><button class="btn btn-gold sm" onclick="addCart(\''+p.id+'\')">+ Carrinho</button><button class="btn btn-green sm" onclick="askProduct(\''+p.id+'\')">💬 Perguntar</button></div></div>';}
+/* FASE 7 — Bloco 2 (P7): o cartão do Market respeita stock e estado. Selo
+   «Empresa verificada» apenas quando a empresa dona está verificada —
+   nunca falsa associação (secção 10). */
+function mkCard(p){const b=db.businesses.find(x=>x.id===p.bizId);const st=p.status||'ativo';
+ const esgotado=st==='esgotado'||(p.stock!==null&&p.stock!==undefined&&p.stock!==''&&+p.stock<=0);
+ const vendavel=st==='ativo'&&!esgotado;
+ const badge=b&&b.verificationStatus==='verificada'?' <span class="bdg b-gold" title="Empresa verificada pela VEG">✔ Verificada</span>':'';
+ const stockTxt=p.stock===null||p.stock===undefined||p.stock===''?'':(esgotado?' · <b style="color:var(--red)">Esgotado</b>':' · Stock: '+esc(p.stock));
+ const stTxt=st==='pausado'?' · <b style="color:var(--amber)">Pausado</b>':'';
+ return '<div class="mkcard"'+(vendavel?'':' style="opacity:.62"')+'><div class="img">'+(p.img?(/video/.test(p.img)?'<video src="'+p.img+'" muted></video>':'<img src="'+p.img+'">'):'🛍️')+'</div><div class="bd"><b>'+esc(p.name)+'</b>'+badge+'<div class="pr">'+fmtKz(p.price)+'</div><small>'+esc(p.desc||'')+'</small><small style="margin-top:5px;color:var(--gold2);font-weight:700">'+(b?esc(b.name):'VEG Market')+' · '+(b?esc(b.province):'')+stockTxt+stTxt+'</small></div><div class="ft">'+(vendavel?'<button class="btn btn-gold sm" onclick="addCart(\''+p.id+'\')">+ Carrinho</button>':'<span class="bdg b-grey">'+(esgotado?'Esgotado':'Indisponível')+'</span>')+'<button class="btn btn-green sm" onclick="askProduct(\''+p.id+'\')">💬 Perguntar</button></div></div>';}
 
 /* ---- Meu Negócio ---- */
 function myBiz(){const u=currentUser();return u?db.businesses.find(b=>b.userId===u.id):null;}
@@ -1955,19 +2233,32 @@ function renderNegocio(){const u=currentUser();if(!u)return;const b=myBiz();
  $('#stPedidos').textContent=db.sols.filter(s=>s.userId===u.id).length;
  $('#stDocs').textContent=db.docs.filter(d=>d.userId===u.id).length;
  $('#stProds').textContent=db.products.filter(p=>p.userId===u.id).length;
- const bt=$('#bzToggle');if(b){if(document.activeElement!==$('#bzNome')){$('#bzNome').value=b.name;$('#bzNif').value=b.nif||'';$('#bzDesc').value=b.desc;$('#bzCat').value=b.cat;$('#bzProv').value=b.province;$('#bzCid').value=b.city||'';$('#bzEnd').value=b.address||'';$('#bzHor').value=b.hor||'';$('#bzWpp').value=b.whatsapp;$('#bzMail').value=b.email||'';$('#bzWeb').value=b.web||'';}bt.style.display='inline-flex';bt.textContent=b.active?'Desactivar perfil':'Reactivar perfil';bt.className=b.active?'btn btn-red':'btn btn-green';$('#bzStatus').textContent=b.active?'Perfil público activo':'Perfil desactivado';}
+ const bt=$('#bzToggle');if(b){if(document.activeElement!==$('#bzNome')){$('#bzNome').value=b.name;$('#bzNif').value=b.nif||'';$('#bzDesc').value=b.desc;$('#bzCat').value=b.cat;$('#bzProv').value=b.province;$('#bzCid').value=b.city||'';$('#bzEnd').value=b.address||'';$('#bzHor').value=b.hor||'';$('#bzWpp').value=b.whatsapp;$('#bzMail').value=b.email||'';$('#bzWeb').value=b.web||'';$('#bzTrade').value=b.tradeName||'';$('#bzSector').value=b.sector||'';$('#bzDocs').value=b.documents||'';$('#bzCerts').value=b.certifications||'';$('#bzPort').value=b.portfolio||'';$('#bzVis').value=b.visibility||'privado';}bt.style.display='inline-flex';bt.textContent=b.active?'Desactivar perfil':'Reactivar perfil';bt.className=b.active?'btn btn-red':'btn btn-green';$('#bzStatus').textContent=b.active?'Perfil público activo':'Perfil desactivado';const VB={pendente:['b-p','⏳ Verificação VEG pendente'],em_analise:['b-p','🔍 Em análise pela equipa VEG'],verificada:['b-g','✔ Empresa verificada pela VEG'],rejeitada:['b-r','✖ Verificação rejeitada']};const vv=VB[b.verificationStatus||'pendente']||VB.pendente;const bv=$('#bzVerif');if(bv)bv.innerHTML='<span class="bdg '+vv[0]+'">'+vv[1]+'</span>'+(b.verificationReason?' <small style="color:var(--mut)">'+esc(b.verificationReason)+'</small>':'');}
  else{$('#bzStatus').textContent='Crie o perfil para activar o modo empresarial.';bt.style.display='none';}
- const rows=db.products.filter(p=>p.userId===u.id).map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+esc(p.type)+'</td><td>'+fmtKz(p.price)+'</td><td><span class="bdg b-g">Publicado</span></td><td><button class="btn btn-red sm" onclick="delProduct(\''+p.id+'\')">🗑</button></td></tr>').join('');
- $('#pdTable').innerHTML='<tr><th>Designação</th><th>Tipo</th><th>Preço</th><th>Estado</th><th></th></tr>'+(rows||'<tr><td colspan="5" style="text-align:center;color:var(--mut)">Sem produtos/serviços ainda.</td></tr>');}
+ const rows=db.products.filter(p=>p.userId===u.id&&p.status!=='removido').map(p=>{const st=PD_ST[p.status||'ativo']||PD_ST.ativo;const stockTxt=p.stock===null||p.stock===undefined||p.stock===''?'<small style="color:#9AA7BC">sem limite</small>':esc(p.stock);
+  const acts=[];if((p.status||'ativo')==='ativo')acts.push('<button class="btn btn-gold sm" onclick="setProductStatus(\''+p.id+'\',\'pausado\')">⏸ Pausar</button>');if(p.status==='pausado'||p.status==='esgotado')acts.push('<button class="btn btn-green sm" onclick="setProductStatus(\''+p.id+'\',\'ativo\')">▶ Activar</button>');acts.push('<button class="btn btn-red sm" onclick="delProduct(\''+p.id+'\')">🗑</button>');
+  return '<tr><td>'+esc(p.name)+(p.testData?' <span class="bdg b-grey">TEST_DATA</span>':'')+'</td><td>'+esc(p.type)+'</td><td>'+fmtKz(p.price)+'</td><td>'+stockTxt+'</td><td><span class="bdg '+st[0]+'">'+st[1]+'</span></td><td>'+acts.join(' ')+'</td></tr>';}).join('');
+ $('#pdTable').innerHTML='<tr><th>Designação</th><th>Tipo</th><th>Preço</th><th>Stock</th><th>Estado</th><th>Acções</th></tr>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--mut)">Sem produtos/serviços ainda.</td></tr>');}
 function saveBusiness(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();let b=myBiz();
- const data={name:$('#bzNome').value.trim(),nif:$('#bzNif').value.trim(),desc:$('#bzDesc').value.trim(),cat:$('#bzCat').value,province:$('#bzProv').value,city:$('#bzCid').value.trim(),address:$('#bzEnd').value.trim(),hor:$('#bzHor').value.trim(),whatsapp:$('#bzWpp').value.trim(),email:$('#bzMail').value.trim(),web:$('#bzWeb').value.trim()};
- fileToData($('#bzLogo').files[0],logo=>{if(b)Object.assign(b,data);else{b={id:uid(),userId:u.id,logo:'',active:true,...data};db.businesses.push(b);}if(logo)b.logo=logo;
+ const data={name:$('#bzNome').value.trim(),nif:$('#bzNif').value.trim(),desc:$('#bzDesc').value.trim(),cat:$('#bzCat').value,province:$('#bzProv').value,city:$('#bzCid').value.trim(),address:$('#bzEnd').value.trim(),hor:$('#bzHor').value.trim(),whatsapp:$('#bzWpp').value.trim(),email:$('#bzMail').value.trim(),web:$('#bzWeb').value.trim(),
+  /* FASE 7 — Bloco 1 (P5): perfil empresarial alargado */
+  tradeName:$('#bzTrade').value.trim(),sector:$('#bzSector').value,documents:$('#bzDocs').value.trim(),certifications:$('#bzCerts').value.trim(),portfolio:$('#bzPort').value.trim(),visibility:$('#bzVis').value};
+ fileToData($('#bzLogo').files[0],logo=>{if(b){/* alterar nome/NIF de empresa verificada exige nova verificação */const crit=(b.name!==data.name)||((b.nif||'')!==data.nif);Object.assign(b,data);if(crit&&b.verificationStatus==='verificada'){b.verificationStatus='pendente';b.verificationReason='Dados de identificação alterados — nova verificação necessária.';notify(u.id,'🔍 Os dados de identificação da empresa foram alterados — o perfil volta a aguardar verificação VEG.');}}else{b={id:uid(),userId:u.id,logo:'',active:true,verificationStatus:'pendente',...data};db.businesses.push(b);}if(logo)b.logo=logo;
  if(u.role==='user'){u.role='business';notify(u.id,'🎉 Perfil empresarial activado! Pode publicar produtos, receber pedidos e criar campanhas.');}
  logAction('Perfil empresarial guardado',b.name);pushData({tipo:'perfil_empresarial',...b});saveDB();enterApp();toast('Perfil empresarial guardado.','ok');});}
 function toggleBizActive(){const b=myBiz();if(!b)return;b.active=!b.active;logAction(b.active?'Reactivação':'Desactivação de perfil empresarial',b.name);saveDB();renderNegocio();toast(b.active?'Perfil reactivado.':'Perfil desactivado (oculto do market).','ok');}
 function addProduct(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();if(!myBiz()){toast('Crie primeiro o perfil empresarial.','er');return;}
- fileToData($('#pdFoto').files[0],img=>{db.products.push({id:uid(),bizId:myBiz().id,userId:u.id,name:$('#pdNome').value.trim(),type:$('#pdTipo').value,price:+$('#pdPreco').value||0,desc:$('#pdDesc').value.trim(),img:img});logAction('Produto/serviço publicado',$('#pdNome').value);pushData({tipo:'novo_produto',nome:$('#pdNome').value,tipo2:$('#pdTipo').value,preco:$('#pdPreco').value});saveDB();e.target.reset();$('#pdPrev').style.display='none';$('#pdPrevV').style.display='none';renderNegocio();renderMarket();toast('Oferta publicada no catálogo e no VEG Market.','ok');});}
-function delProduct(id){if(!confirm('Remover esta oferta?'))return;db.products=db.products.filter(p=>p.id!==id);saveDB();renderNegocio();renderMarket();toast('Oferta removida.','ok');}
+ fileToData($('#pdFoto').files[0],img=>{const st=$('#pdEstado').value||'ativo';const stk=$('#pdStock').value===''?null:Math.max(0,parseInt($('#pdStock').value,10)||0);db.products.push({id:uid(),bizId:myBiz().id,userId:u.id,name:$('#pdNome').value.trim(),type:$('#pdTipo').value,price:+$('#pdPreco').value||0,desc:$('#pdDesc').value.trim(),img:img,status:st,stock:$('#pdTipo').value==='Serviço'?null:stk});logAction(st==='ativo'?'Produto/serviço publicado':'Rascunho de oferta guardado',$('#pdNome').value);pushData({tipo:'novo_produto',nome:$('#pdNome').value,tipo2:$('#pdTipo').value,preco:$('#pdPreco').value});saveDB();e.target.reset();$('#pdPrev').style.display='none';$('#pdPrevV').style.display='none';renderNegocio();renderMarket();toast(st==='ativo'?'Oferta publicada no catálogo e no VEG Market.':'Rascunho guardado (não visível no Market).','ok');});}
+/* FASE 7 — Bloco 2 (P7): estado do produto é alterado por ACÇÃO
+   server-side (updateProductStatus — dono ou admin, com auditoria). */
+const PD_ST={ativo:['b-g','Activo'],rascunho:['b-grey','Rascunho'],pausado:['b-gold','Pausado'],esgotado:['b-grey','Esgotado'],removido:['b-r','Removido']};
+async function setProductStatus(id,st,stock){const p=db.products.find(x=>x.id===id);if(!p)return;
+ try{const res=await VEG_API.post('updateProductStatus',{id:id,status:st,stock:stock});
+  if(res.success&&res.data){p.status=res.data.status;if(res.data.stock!==undefined&&res.data.stock!==null)p.stock=res.data.stock;}
+  else if(res.error&&res.error.code!=='NETWORK_ERROR'&&res.error.code!=='NOT_CONFIGURED'){toast(res.message||'Operação recusada pelo servidor.','er');return;}
+ }catch(e){p.status=st;if(stock!==undefined&&stock!==null)p.stock=stock;toast('Backend indisponível — alteração ficará sincronizada mais tarde.','er');}
+ logAction('Oferta '+((PD_ST[st]||[,''])[1]||st),p.name);saveDB();renderNegocio();renderMarket();toast('Estado actualizado: '+((PD_ST[p.status]||[,''])[1]||p.status),'ok');}
+async function delProduct(id){if(!confirm('Remover esta oferta do VEG Market?'))return;await setProductStatus(id,'removido');}
 document.addEventListener('DOMContentLoaded',()=>{const pf=$('#pdFoto');if(pf)pf.addEventListener('change',()=>{const f=pf.files[0];if(!f)return;const isV=f.type.startsWith('video');fileToData(f,d=>{if(isV){$('#pdPrevV').src=d;$('#pdPrevV').style.display='block';}else{$('#pdPrev').src=d;$('#pdPrev').style.display='block';}});});
  const lf=$('#bzLogo');if(lf)lf.addEventListener('change',()=>fileToData(lf.files[0],d=>{if(d){$('#bzPrev').src=d;$('#bzPrev').style.display='block';}}));});
 
@@ -1984,7 +2275,16 @@ function submitSolic(e){e.preventDefault();if(!requireLogin())return;if(!walletG
  saveDB();e.target.reset();renderSolucoes();renderInicio();toast('Solicitação '+code+' enviada! Acompanhe no histórico.','ok');}
 function rateSol(id){modalT('Avaliar serviço','<p style="font-size:.85rem;margin-bottom:10px">Classifique a qualidade, atendimento, pontualidade e experiência.</p><div class="stars" style="font-size:2rem" id="rateStars">☆☆☆☆☆</div><div class="fld" style="margin-top:12px"><label>Comentário</label><textarea id="rateTxt" rows="3" placeholder="Partilhe a sua experiência..."></textarea></div><button class="btn btn-gold sm" onclick="saveRating(\''+id+'\')">Enviar avaliação</button>');
  let v=0;const st=$('#rateStars');st.onclick=ev=>{const r=st.getBoundingClientRect();v=Math.min(5,Math.max(1,Math.round((ev.clientX-r.left)/r.width*5)));st.textContent='★★★★★'.slice(0,v)+'☆☆☆☆☆'.slice(0,5-v);st.dataset.v=v;};}
-function saveRating(id){toast('Avaliação registada. Obrigado! (Mecanismos anti-fraude aplicam-se.)','ok');logAction('Avaliação de serviço',id);document.querySelectorAll('.mback').forEach(m=>m.remove());saveDB();}
+/* A-02 (Fase 7): a avaliação passa a ser PERSISTIDA na solicitação (antes era
+   recolhida na interface e descartada). Estes dados alimentam o futuro VEG
+   TRUST — categoria "AVALIAÇÃO DO UTILIZADOR", separada de dados verificados. */
+function saveRating(id){const s=db.sols.find(x=>x.id===id);const v=+((document.getElementById('rateStars')||{}).dataset&&document.getElementById('rateStars').dataset.v||0);const txt=(document.getElementById('rateTxt')?document.getElementById('rateTxt').value.trim():'');
+ if(!s){toast('Solicitação não encontrada.','er');return;}
+ if(!v||v<1||v>5){toast('Seleccione de 1 a 5 estrelas antes de enviar.','er');return;}
+ s.rating=v;s.ratingComment=txt;s.ratedAt=Date.now();
+ logAction('Avaliação de serviço ('+v+'★)',s.code||id);
+ document.querySelectorAll('.mback').forEach(m=>m.remove());saveDB();renderSolucoes();
+ toast('Avaliação registada. Obrigado! (Mecanismos anti-fraude aplicam-se.)','ok');}
 
 /* ---- Documentos ---- */
 const DOC_MODELS={
@@ -2052,18 +2352,43 @@ function sendAsk(pid,bizId){const u=currentUser();db.msgs.push({id:uid(),fromUse
 let cart=[];
 let adminUnlocked=false;
 let scrHistory=[],navBack=false;
-function renderMarket(){const q=($('#mkSearch').value||'').toLowerCase();const list=db.products.filter(p=>{const b=db.businesses.find(x=>x.id===p.bizId);if(b&&b.active===false)return false;return (p.name+' '+p.desc+' '+(b?b.name:'')).toLowerCase().includes(q);});
+/* FASE 7 — Bloco 2 (P7): rascunhos e itens removidos não aparecem no
+   Market público; esgotados/pausados aparecem indisponíveis. */
+function renderMarket(){const q=($('#mkSearch').value||'').toLowerCase();const list=db.products.filter(p=>{const b=db.businesses.find(x=>x.id===p.bizId);if(b&&b.active===false)return false;if(p.status==='removido'||p.status==='rascunho')return false;return (p.name+' '+(p.desc||'')+' '+(b?b.name:'')).toLowerCase().includes(q);});
  $('#mkGrid').innerHTML=list.map(p=>mkCard(p)).join('')||'<div class="empty" style="grid-column:1/-1"><div class="big">🛒</div>Sem ofertas para a pesquisa.</div>';
  $('#cartCount').textContent=cart.length;}
-function addCart(pid){if(!requireLogin())return;const p=db.products.find(x=>x.id===pid);if(!p)return;cart.push(pid);renderMarket();toast('«'+p.name+'» adicionado ao carrinho.','ok');}
+function addCart(pid){if(!requireLogin())return;const p=db.products.find(x=>x.id===pid);if(!p)return;if((p.status||'ativo')!=='ativo'){toast('Esta oferta não está disponível para venda.','er');return;}if(p.stock!==null&&p.stock!==undefined&&p.stock!==''&&+p.stock<=0){toast('Produto esgotado.','er');return;}
+ if(p.stock!==null&&p.stock!==undefined&&p.stock!==''){const no=cart.filter(x=>x===pid).length;if(no+1>+p.stock){toast('Stock insuficiente (disponível: '+p.stock+').','er');return;}}
+ cart.push(pid);renderMarket();toast('«'+p.name+'» adicionado ao carrinho.','ok');}
 function viewCart(){if(!requireLogin())return;const items=cart.map(id=>db.products.find(p=>p.id===id)).filter(Boolean);
+ const qty={};items.forEach(p=>{qty[p.id]=(qty[p.id]||0)+1;});
+ const lines=Object.keys(qty).map(id=>{const p=items.find(x=>x.id===id);return '<tr><td>'+esc(p.name)+(qty[id]>1?' × '+qty[id]:'')+'</td><td>'+fmtKz(p.price*qty[id])+'</td></tr>';});
  const total=items.reduce((s,p)=>s+ +p.price,0);
- modalT('🛒 Carrinho','<div class="twrap"><table><tr><th>Item</th><th>Preço</th></tr>'+(items.map(p=>'<tr><td>'+esc(p.name)+'</td><td>'+fmtKz(p.price)+'</td></tr>').join('')||'<tr><td colspan="2" style="text-align:center;color:var(--mut)">Carrinho vazio.</td></tr>')+'</table></div><h3 style="margin:14px 0">Total: <span style="color:var(--gold2)">'+fmtKz(total)+'</span></h3><div class="notice">💳 O pagamento será processado por um provedor autorizado (DEPENDÊNCIA EXTERNA). Ao confirmar, a encomenda fica no estado «Recebido» e o pagamento «Pendente» até validação.</div><div style="display:flex;gap:9px"><button class="btn btn-gold" '+(items.length?'':'disabled')+' onclick="checkout()">✅ Confirmar Encomenda</button><button class="btn btn-grey" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove())">Continuar a comprar</button></div>');}
-function checkout(){if(!walletGuard())return;const u=currentUser();const items=cart.map(id=>db.products.find(p=>p.id===id)).filter(Boolean);const total=items.reduce((s,p)=>s+ +p.price,0);
+ modalT('🛒 Carrinho','<div class="twrap"><table><tr><th>Item</th><th>Preço</th></tr>'+(lines.join('')||'<tr><td colspan="2" style="text-align:center;color:var(--mut)">Carrinho vazio.</td></tr>')+'</table></div><h3 style="margin:14px 0">Total: <span style="color:var(--gold2)">'+fmtKz(total)+'</span></h3><div class="notice">💳 O pagamento será processado por um provedor autorizado (DEPENDÊNCIA EXTERNA). Ao confirmar, a encomenda fica no estado «Recebido» e o pagamento «Pendente» até validação. O stock é validado e debitado <b>no servidor</b> (placeOrder).</div><div style="display:flex;gap:9px"><button class="btn btn-gold" '+(items.length?'':'disabled')+' onclick="checkout()">✅ Confirmar Encomenda</button><button class="btn btn-grey" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove())">Continuar a comprar</button></div>');}
+/* FASE 7 — Bloco 2 (P7): a encomenda é uma ACÇÃO SERVER-SIDE (placeOrder) —
+   o stock é validado e debitado no servidor, com auditoria; o cliente já não
+   pode «comprar» stock inexistente. Se o backend estiver offline, cai no
+   modo local anterior (documentado como limitação). */
+async function checkout(){if(!walletGuard())return;const u=currentUser();const items=cart.map(id=>db.products.find(p=>p.id===id)).filter(Boolean);const total=items.reduce((s,p)=>s+ +p.price,0);
+ const qty={};items.forEach(p=>{qty[p.id]=(qty[p.id]||0)+1;});
+ const lines=Object.keys(qty).map(id=>({productId:id,qty:qty[id]}));
+ const done=function(code,serverOrder,stockAfter){
+  if(stockAfter){db.products.forEach(function(p){if(stockAfter[p.id]!==undefined){p.stock=stockAfter[p.id];if(+p.stock<=0)p.status='esgotado';}});}
+  const order=serverOrder||{id:uid(),code,userId:u.id,items:items.map(p=>({productId:p.id,name:p.name,qty:qty[p.id]||1,price:p.price})),total,status:'Recebido',created:Date.now()};
+  if(!db.orders.some(o=>o.id===order.id))db.orders.push(order);
+  db.payments.push({id:uid(),userId:u.id,ref:'PAG-'+Date.now().toString().slice(-8),concept:'Encomenda '+order.code,amount:total,method:'A definir com provedor',status:'Pendente',created:Date.now()});
+  notify(u.id,'📦 '+order.code+' registado! Estado: Recebido. Pagamento pendente de validação.');logAction('Encomenda criada',order.code);pushData({tipo:'encomenda',codigo:order.code,total:total,items:items.length});cart=[];saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderMarket();renderInicio();
+  modalT('Encomenda confirmada','<div style="text-align:center;padding:10px"><div style="font-size:3rem">📦</div><h3 style="color:var(--navy);margin:8px 0">'+esc(order.code)+'</h3><p style="font-size:.85rem;color:var(--mut)">Total: <b>'+fmtKz(order.total!=null?order.total:total)+'</b><br>Estado: <span class="bdg b-p">Recebido</span> → Em preparação → Enviado → Entregue<br><small>O stock foi debitado no servidor e o vendedor será notificado para confirmar.</small></p><button class="btn btn-gold sm" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove());go(\'financeiro\')">Ver no VEG Finance</button></div>');};
+ try{
+  const res=await VEG_API.post('placeOrder',{items:lines});
+  if(res.success&&res.data&&res.data.order){done(res.data.order.code,res.data.order,res.data.stockAfter);return;}
+  if(res.error&&res.error.code&&res.error.code!=='NETWORK_ERROR'&&res.error.code!=='NOT_CONFIGURED'){
+   if(res.error.code==='AUTH_REQUIRED'||res.error.code==='SESSION_EXPIRED'){toast('Sessão expirada — inicie sessão novamente e tente de novo.','er');return;}
+   toast('Encomenda recusada: '+res.message,'er');await VEG_SYNC.pull({silent:true});renderMarket();return;}
+ }catch(e){}
  const code='PEDIDO #VEG-'+String(db.counters.order++).padStart(6,'0');
- db.orders.push({id:uid(),code,userId:u.id,items:items.map(p=>({productId:p.id,name:p.name,qty:1,price:p.price})),total,status:'Recebido',created:Date.now()});
- db.payments.push({id:uid(),userId:u.id,ref:'PAG-'+Date.now().toString().slice(-8),concept:'Encomenda '+code,amount:total,method:'A definir com provedor',status:'Pendente',created:Date.now()});
- notify(u.id,'📦 '+code+' registado! Estado: Recebido. Pagamento pendente de validação.');logAction('Encomenda criada',code);pushData({tipo:'encomenda',codigo:code,total:total,items:items.length});cart=[];saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderMarket();renderInicio();modalT('Encomenda confirmada','<div style="text-align:center;padding:10px"><div style="font-size:3rem">📦</div><h3 style="color:var(--navy);margin:8px 0">'+code+'</h3><p style="font-size:.85rem;color:var(--mut)">Total: <b>'+fmtKz(total)+'</b><br>Estado: <span class="bdg b-p">Recebido</span> → Em preparação → Enviado → Entregue<br><small>O vendedor será notificado para confirmar.</small></p><button class="btn btn-gold sm" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove());go(\'financeiro\')">Ver no VEG Finance</button></div>');}
+ toast('Backend indisponível — encomenda registada em modo local (sincroniza mais tarde).','er');
+ done(code,null,null);}
 
 /* ================= MARKETING ================= */
 function renderMarketing(){const u=currentUser();if(!u)return;$('#mkPrice').textContent=Number(db.cfg.campPrice).toLocaleString('pt-AO');
@@ -2164,7 +2489,11 @@ function apptWppLink(a,extra){if(!a||!a.cliWpp)return'';const num=(a.cliWpp||'')
 /* ===== FASE 5: Pagamentos Modelo A — VEG centraliza · comissão 15% · reembolso em carteira ===== */
 const VEG_COMMISSION=0.15;
 function payBadge(a){if(!a||!a.pay)return'';if(a.pay.status==='pago')return '<span class="bdg b-g">✅ Pago · '+esc(a.pay.method||'')+'</span>';if(a.pay.status==='reembolsado')return '<span class="bdg b-gold">↩️ Reembolsado em carteira</span>';return '<span class="bdg b-p">💳 Pagamento pendente</span>';}
-function creditWallet(u,amount,concept){if(!u)return;const w=ensureWallet(u);w.balance=(w.balance||0)+amount;w.refunded=(w.refunded||0)+amount;w.tx=w.tx||[];w.tx.push({id:uid(),type:'credito',concept:concept,amount:amount,currency:'Kz',ts:Date.now()});w.ledger=w.ledger||[];w.ledger.push({ts:Date.now(),type:'credito',concept:concept,amount:amount});}
+/* A-01 (Fase 7): renomeada de creditWallet → creditWalletRefund. Existiam DUAS
+   funções creditWallet (esta e a de carregamento, mais abaixo); em JavaScript a
+   segunda sobrescrevia a primeira, e os reembolsos eram executados com a
+   assinatura errada — o valor nunca entrava na carteira. Nomes agora únicos. */
+function creditWalletRefund(u,amount,concept){if(!u)return;const w=ensureWallet(u);w.balance=(w.balance||0)+amount;w.refunded=(w.refunded||0)+amount;w.tx=w.tx||[];w.tx.push({id:uid(),type:'credito',concept:concept,amount:amount,currency:'Kz',ts:Date.now()});w.ledger=w.ledger||[];w.ledger.push({ts:Date.now(),type:'credito',concept:concept,amount:amount});}
 function payInstructions(id){const a=db.appts.find(x=>x.id===id);if(!a||!a.quote)return;
  modalT('💳 Pagamento do serviço — '+a.serv,
  '<div class="kv"><span>Valor a pagar (total)</span><b style="color:var(--gold2);font-size:1.2rem">'+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz</b></div>'+
@@ -2202,7 +2531,7 @@ function settleAppt(a){if(!a.quote||!a.partnerId||!(a.pay&&a.pay.status==='pago'
  pushData({tipo:'liquidacao',servico:a.serv,parceiro:pt.name,bruto:gross,comissao:com,liquido:net});
  logAction('Liquidação gerada',pt.name+' — líquido '+net+' Kz');}
 function refundAppt(a,reasonTxt){if(!a.pay||a.pay.status!=='pago'||!a.quote)return;const u=db.users.find(x=>x.id===a.userId);const amt=a.quote.amount;
- creditWallet(u,amt,'Reembolso — agendamento '+a.serv);
+ creditWalletRefund(u,amt,'Reembolso — agendamento '+a.serv);
  a.pay.status='reembolsado';apptHist(a,'sistema','Reembolso em carteira VEG Saldo',amt.toLocaleString('pt-PT')+' Kz'+(reasonTxt?' — '+reasonTxt:''));
  if(u)notify(u.id,'↩️ '+amt.toLocaleString('pt-PT')+' Kz creditados na sua carteira VEG Saldo (reembolso de «'+a.serv+'»).');
  notifyApptEmail(a,'O valor de '+amt.toLocaleString('pt-PT')+' Kz foi creditado na sua carteira VEG Saldo (reembolso). Disponível para futuros serviços.');
@@ -2271,11 +2600,36 @@ function renderAgenda(){const u=currentUser();
  if(u&&$('#agWpp')&&!$('#agWpp').value&&(u.phone||u.whatsapp))$('#agWpp').value=u.phone||u.whatsapp;
  if($('#agPartner')){const ps=db.partners.filter(partnerPublic);const cur=$('#agPartner').value;$('#agPartner').innerHTML='<option value="">Sem preferência — a VEG atribui o parceiro</option>'+ps.map(p=>'<option value="'+p.id+'"'+(p.id===cur?' selected':'')+'>'+esc(p.name)+' · '+esc(p.cat)+'</option>').join('');}
  const lvl={0:'',1:'<br><small style="color:var(--blue)">Confirmação 1/3 — aguarda parceiro</small>',2:'<br><small style="color:var(--green)">Confirmação 2/3 — tudo confirmado</small>',3:'<br><small style="color:var(--green)">✔ Concluído (3/3)</small>'};
- const rows=u?db.appts.filter(a=>a.userId===u.id).sort((a,b)=>b.created-a.created).map(a=>{const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;const act=a.status==='orcamentado'&&a.quote?'<button class="btn btn-gold sm" onclick="viewQuote(\''+a.id+'\')">💰 Ver orçamento</button>':(a.status==='confirmado_cliente'&&a.pay&&a.pay.status==='pendente'?'<button class="btn btn-green sm" onclick="payInstructions(\''+a.id+'\')">💳 Pagar</button>':'');return '<tr><td>'+esc(a.serv)+(pt?'<br><small>🤝 '+esc(pt.name)+'</small>':'')+'</td><td>'+esc(a.date)+' '+esc(a.time)+'</td><td>'+esc(a.local||'—')+'</td><td>'+(apptBadge(a.status)||'')+(lvl[confirmLevel(a)]||'')+(a.quote&&a.pay?'<br>'+payBadge(a):'')+'</td><td>'+act+'</td></tr>';}).join(''):'';
+ const rows=u?db.appts.filter(a=>a.userId===u.id).sort((a,b)=>(b.created||0)-(a.created||0)).map(a=>{const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;
+  if(a.flow==='veg_booking'){const prov=a.providerId?db.partners.find(p=>p.id===a.providerId):null;return '<tr><td>'+esc(a.serv||a.service)+(prov?'<br><small>🤝 '+esc(prov.name)+'</small>':'')+'</td><td>'+esc(a.date)+' '+esc(a.time)+'</td><td>'+esc(a.local||'—')+'</td><td>'+vegBookingBadge(a.status)+'</td><td><small style="color:var(--mut)">Fluxo VEG de marcação com disponibilidade validada no servidor.</small></td></tr>';}
+  const act=a.status==='orcamentado'&&a.quote?'<button class="btn btn-gold sm" onclick="viewQuote(\''+a.id+'\')">💰 Ver orçamento</button>':(a.status==='confirmado_cliente'&&a.pay&&a.pay.status==='pendente'?'<button class="btn btn-green sm" onclick="payInstructions(\''+a.id+'\')">💳 Pagar</button>':'');return '<tr><td>'+esc(a.serv)+(pt?'<br><small>🤝 '+esc(pt.name)+'</small>':'')+'</td><td>'+esc(a.date)+' '+esc(a.time)+'</td><td>'+esc(a.local||'—')+'</td><td>'+(apptBadge(a.status)||'')+(lvl[confirmLevel(a)]||'')+(a.quote&&a.pay?'<br>'+payBadge(a):'')+'</td><td>'+act+'</td></tr>';}).join(''):'';
  $('#agTable').innerHTML='<tr><th>Serviço / Parceiro</th><th>Data / Hora</th><th>Local</th><th>Estado / Confirmação</th><th>Orçamento</th></tr>'+(rows||'<tr><td colspan="5" style="text-align:center;color:var(--mut)">Sem agendamentos.</td></tr>');}
 
-function createAppt(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();
- const rec={id:uid(),userId:u.id,serv:$('#agServ').value,date:$('#agData').value,time:$('#agHora').value,local:$('#agLocal').value.trim(),obs:$('#agObs').value.trim(),cliEmail:$('#agEmail').value.trim(),cliWpp:$('#agWpp').value.trim(),partnerId:($('#agPartner')&&$('#agPartner').value)||null,status:'solicitado',created:Date.now(),hist:[{ts:Date.now(),actor:'cliente',action:'Agendamento solicitado',note:''}]};
+async function createAppt(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();
+ const partnerId=($('#agPartner')&&$('#agPartner').value)||null;
+ const slot=($('#agSlot')&&$('#agSlot').value)||'';
+ /* FASE 7 — Bloco 3: com parceiro seleccionado, a marcação segue o fluxo real
+    de disponibilidade: pedido validado no servidor, em slot livre confirmado
+    pelo backend. Nunca se confirma localmente um horário sem essa validação. */
+ if(partnerId&&slot){
+  const btn=e.target.querySelector('button[type="submit"]');if(btn){btn.disabled=true;btn.textContent='⏳ A validar no servidor...';}
+  try{
+   const res=await VEG_API.post('createBookingRequest',{providerType:'partner',providerId:partnerId,service:$('#agServ').value,date:$('#agData').value,time:slot,local:$('#agLocal').value.trim(),notes:$('#agObs').value.trim(),clientEmail:$('#agEmail').value.trim(),clientWpp:$('#agWpp').value.trim(),idempotencyKey:window.__vegIdem||''});
+   if(res.success&&res.data&&res.data.booking){
+    const bk=res.data.booking;db.appts.push(bk);saveDB();e.target.reset();
+    const sw=$('#agSlotsWrap');if(sw)sw.style.display='none';$('#agSlot').value='';
+    window.__vegIdem=null;renderAgenda();
+    modalT('Pedido de marcação registado','<div style="text-align:center;padding:10px"><div style="font-size:3rem">📅</div><p style="font-size:.85rem;color:var(--mut)">Serviço: <b>'+esc(bk.serv||'')+'</b><br>Data: <b>'+esc(bk.date)+' às '+esc(bk.time)+'</b><br>Estado: '+vegBookingBadge('pedido_enviado')+'<br><small>O pedido será validado pela equipa VEG e encaminhado ao parceiro. Acompanhe o estado em «Meus Agendamentos».</small></p></div>');
+    return;}
+   if(res.error&&(res.error.code==='SLOT_TAKEN'||res.error.code==='DATE_BLOCKED'||res.error.code==='AVAILABILITY_NOT_CONFIGURED'||res.error.code==='NOT_ELIGIBLE'||res.error.code==='INVALID_DATE')){toast(res.message,'er');vegLoadSlots();return;}
+   if(res.error&&(res.error.code==='AUTH_REQUIRED'||res.error.code==='SESSION_EXPIRED')){toast('Sessão expirada — inicie sessão novamente.','er');return;}
+   if(res.error&&res.error.code==='DUPLICATE'){toast('Este pedido já foi registado.','ok');renderAgenda();return;}
+   toast('Não foi possível registar a marcação: '+(res.message||'erro de rede')+'. Tente novamente.','er');
+  }catch(err){toast('Sem ligação ao servidor — a marcação com parceiro exige validação de disponibilidade online. Tente novamente.','er');}
+  finally{if(btn){btn.disabled=false;btn.textContent='📅 Confirmar Agendamento';}}
+  return;}
+ if(partnerId&&!slot){toast('Seleccione um horário livre da agenda do parceiro (consultado no servidor).','er');return;}
+ const rec={id:uid(),userId:u.id,serv:$('#agServ').value,date:$('#agData').value,time:$('#agHora').value,local:$('#agLocal').value.trim(),obs:$('#agObs').value.trim(),cliEmail:$('#agEmail').value.trim(),cliWpp:$('#agWpp').value.trim(),partnerId:null,status:'solicitado',created:Date.now(),hist:[{ts:Date.now(),actor:'cliente',action:'Agendamento solicitado',note:''}]};
  db.appts.push(rec);
  notify(u.id,'📅 Agendamento solicitado: '+rec.serv+' em '+rec.date+' às '+rec.time+'. Será validado pela equipa VEG.');
  db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(a=>notify(a.id,'📅 Novo agendamento para validação: '+rec.serv+' ('+rec.date+' '+rec.time+')'));
@@ -2323,8 +2677,10 @@ function createTravel(e){e.preventDefault();if(!requireLogin())return;if(!wallet
 
 /* ================= PARCEIROS ================= */
 /* ===== FASE 1: Rede de Parceiros VEG — pesquisa real, 9 estados, selo de verificação ===== */
-const PARTNER_STATUS={pendente:'Pendente',em_analise:'Em análise',aprovado:'Aprovado',ativo:'Activo',suspenso:'Suspenso',rejeitado:'Rejeitado',cancelado:'Cancelado',expirado:'Expirado',inactivo:'Inactivo'};
-const partnerBadge=st=>st==='ativo'?'<span class="bdg b-g">Activo</span>':st==='aprovado'?'<span class="bdg b-n">Aprovado</span>':st==='em_analise'?'<span class="bdg b-p">Em análise</span>':st==='rejeitado'?'<span class="bdg b-r">Rejeitado</span>':st==='suspenso'?'<span class="bdg b-gold">Suspenso</span>':st==='pendente'?'<span class="bdg b-grey">Pendente</span>':'<span class="bdg b-grey">Inactivo</span>';
+const PARTNER_STATUS={pendente:'Pedido de adesão',pedido_adesao:'Pedido de adesão',em_analise:'Em análise',aprovado:'Aprovado',ativo:'Activo (parceria formal)',suspenso:'Suspenso',rejeitado:'Rejeitado',cancelado:'Cancelado',expirado:'Parceria terminada',terminado:'Parceria terminada',inactivo:'Não verificado',nao_verificado:'Não verificado'};
+/* FASE 7 — Bloco 3: estado de elegibilidade efectivo (migra estados legados). */
+function vegEligLocal(p){if(!p)return 'nao_verificado';if(p.eligibility&&PARTNER_STATUS[p.eligibility])return p.eligibility;const legacy={pendente:'pedido_adesao',em_analise:'em_analise',aprovado:'aprovado',ativo:'ativo',suspenso:'suspenso',rejeitado:'rejeitado',cancelado:'cancelado',expirado:'terminado',inactivo:'nao_verificado'};return legacy[p.status]||'nao_verificado';}
+const partnerBadge=st=>{const map={ativo:'<span class="bdg b-g">Activo</span>',aprovado:'<span class="bdg b-n">Aprovado</span>',em_analise:'<span class="bdg b-p">Em análise</span>',rejeitado:'<span class="bdg b-r">Rejeitado</span>',suspenso:'<span class="bdg b-gold">Suspenso</span>',pedido_adesao:'<span class="bdg b-grey">Pedido de adesão</span>',terminado:'<span class="bdg b-grey">Parceria terminada</span>',cancelado:'<span class="bdg b-grey">Cancelado</span>',nao_verificado:'<span class="bdg b-grey">Não verificado</span>',pendente:'<span class="bdg b-grey">Pedido de adesão</span>',inactivo:'<span class="bdg b-grey">Não verificado</span>',expirado:'<span class="bdg b-grey">Parceria terminada</span>'};return map[st]||'<span class="bdg b-grey">'+esc(st)+'</span>';};
 /* Só ATIVO + verificado aparece publicamente (Prompt Mestre §1) */
 const partnerPublic=p=>p&&p.status==='ativo'&&p.verified===true;
 function partnerSearch(){
@@ -2343,14 +2699,26 @@ function renderParceiros(){
  if($('#ptqCat')){const cur=$('#ptqCat').value;$('#ptqCat').innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>'<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>').join('');}
  partnerSearch();
  const u=currentUser();if(!u)return;const mine=db.partners.filter(p=>p.userId===u.id);
- $('#ptStatus').innerHTML=mine.length?mine.map(p=>'<div class="kv"><span>'+esc(p.name)+' — '+esc(p.cat)+'</span><b>'+(partnerBadge(p.status)||'')+'</b></div>').join(''):'<div class="empty"><div class="big">🤝</div>Ainda não submeteu candidatura de parceria.</div>';}
+ $('#ptStatus').innerHTML=mine.length?mine.map(p=>{const el=vegEligLocal(p);return '<div class="kv"><span>'+esc(p.name)+' — '+esc(p.cat)+'</span><b>'+(partnerBadge(el)||'')+(p.reason&&['rejeitado','suspenso','terminado'].indexOf(el)!==-1?' <small style="color:var(--mut)">'+esc(p.reason)+'</small>':'')+'</b></div>';}).join(''):'<div class="empty"><div class="big">🤝</div>Ainda não submeteu pedido de adesão de parceria.</div>';}
 
-function applyPartner(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();
- const rec={id:uid(),userId:u.id,name:$('#ptNome').value.trim(),nif:$('#ptNif').value.trim(),cat:$('#ptCat').value,province:$('#ptProv').value,whatsapp:$('#ptWpp').value.trim(),email:$('#ptEmail').value.trim(),site:$('#ptSite').value.trim(),desc:$('#ptDesc').value.trim(),status:'pendente',verified:false,createdAt:new Date().toISOString()};
+async function applyPartner(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();
+ const app={name:$('#ptNome').value.trim(),nif:$('#ptNif').value.trim(),cat:$('#ptCat').value,province:$('#ptProv').value,whatsapp:$('#ptWpp').value.trim(),email:$('#ptEmail').value.trim(),site:$('#ptSite').value.trim(),desc:$('#ptDesc').value.trim()};
+ /* FASE 7 — Bloco 3: o pedido de adesão é registado NO SERVIDOR (elegibilidade
+    'pedido_adesao', decidida apenas pelo VEG ADMIN). O registo local espelha
+    o resultado; o syncDelta nunca pode auto-aprovar. */
+ let serverId=null;
+ try{const res=await VEG_API.post('submitPartnerApplication',{application:app});
+  if(res.success&&res.data&&res.data.id){serverId=res.data.id;
+   notify(u.id,'📩 Pedido de adesão registado. Análise pela equipa VEG em até 5 dias úteis.');
+   logAction('Pedido de adesão de parceiro (servidor)',app.name);}
+  else if(res.error&&res.error.code==='DUPLICATE'){toast(res.message,'er');renderParceiros();return;}
+  else if(res.error&&res.error.code!=='NETWORK_ERROR'&&res.error.code!=='NOT_CONFIGURED'){toast('Não foi possível submeter: '+res.message,'er');return;}
+ }catch(err){}
+ const rec={id:serverId||uid(),userId:u.id,...app,status:'pedido_adesao',eligibility:'pedido_adesao',verified:false,createdAt:new Date().toISOString()};
  db.partners.push(rec);
- notify(u.id,'📩 Candidatura de parceiro submetida. Análise pela equipa VEG em até 5 dias úteis.');
- db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(a=>notify(a.id,'🤝 Nova candidatura de parceiro: '+rec.name+' ('+rec.cat+', '+rec.province+')'));
- logAction('Candidatura de parceiro',rec.name);pushData({tipo:'parceria',nome:rec.name,categoria:rec.cat,provincia:rec.province,whatsapp:rec.whatsapp,email:rec.email,site:rec.site});saveDB();e.target.reset();renderParceiros();toast('Candidatura submetida para análise.','ok');}
+ db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(a=>notify(a.id,'🤝 Novo pedido de adesão: '+rec.name+' ('+rec.cat+', '+rec.province+')'));
+ if(!serverId)pushData({tipo:'parceria',nome:rec.name,categoria:rec.cat,provincia:rec.province,whatsapp:rec.whatsapp,email:rec.email,site:rec.site});
+ saveDB();e.target.reset();renderParceiros();toast('Pedido de adesão submetido para análise.','ok');}
 
 function renderFinance(){const u=currentUser();if(!u)return;const pays=db.payments.filter(p=>p.userId===u.id);
  const tot=pays.filter(p=>p.status==='Confirmado').reduce((s,p)=>s+ +p.amount,0);
@@ -2372,13 +2740,27 @@ function saveTkRating(id){const t=db.tickets.find(x=>x.id===id);t.rating=+($('#t
 function renderPerfil(){const u=currentUser();if(!u)return;
  $('#pfAv').innerHTML=u.photo?'<img src="'+u.photo+'" style="width:100%;height:100%;object-fit:cover">':esc(u.name[0].toUpperCase());
  $('#pfNome').textContent=u.name;$('#pfMail').textContent=u.email+' · '+u.phone;$('#pfRole').textContent=ROLE_NAMES[u.role];const pv=$('#pfVegno');if(pv)pv.textContent=u.vegno||'—';renderTfaRow();
- if(document.activeElement!==$('#pfNomeIn')){$('#pfNomeIn').value=u.name;$('#pfProf').value=u.profession||'';$('#pfEmailIn').value=u.email;$('#pfTelIn').value=u.phone;$('#pfProvIn').value=u.province||'';$('#pfInt').value=u.interests||'';$('#pfIdade').value=u.idade||'';}}
+ if(document.activeElement!==$('#pfNomeIn')){$('#pfNomeIn').value=u.name;$('#pfProf').value=u.profession||'';$('#pfEmailIn').value=u.email;$('#pfTelIn').value=u.phone;$('#pfProvIn').value=u.province||'';$('#pfInt').value=u.interests||'';$('#pfIdade').value=u.idade||'';}renderVegIdCard(u);renderProForm(u);}
 function changePhoto(inp){fileToData(inp.files[0],d=>{if(d){const u=currentUser();if(!u)return;u.photo=d;saveDB();enterApp();logAction('Fotografia de perfil colocada/alterada','-');toast('📷 Fotografia de perfil actualizada.','ok');}});}
 function removePhoto(){const u=currentUser();if(!u)return;if(!u.photo){toast('Não tem fotografia para eliminar.','er');return;}if(!confirm('Eliminar a fotografia do seu perfil?'))return;u.photo='';saveDB();enterApp();logAction('Fotografia de perfil eliminada','-');toast('🗑 Fotografia eliminada.','ok');}
+/* ================= FASE 7 — BLOCO 1: VEG ID + PERFIL PROFISSIONAL =================
+   O VEG ID é a identidade central: uma conta, vários perfis (relações,
+   não contas duplicadas — secção 32 do Prompt Mestre). */
+function vegIdTypes(u){const t=['Pessoal'];if(myBiz()||u.role==='business')t.push('Empresarial');if(db.professionals.some(p=>p.userId===u.id))t.push('Profissional');if(db.partners.some(p=>p.userId===u.id))t.push('Parceiro VEG');if(isAdmin())t.push('Administração VEG');return t;}
+function renderVegIdCard(u){const el=$('#vegIdCard');if(!el)return;el.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="bdg b-g" style="font-size:.75rem">🪪 VEG ID: '+esc(u.vegno||'—')+'</span>'+vegIdTypes(u).map(t=>'<span class="bdg b-p">'+esc(t)+'</span>').join('')+'</div><p style="font-size:.72rem;color:#9AA7BC;margin-top:8px">Os perfis profissional e empresarial vivem nesta mesma conta — sem registos duplicados.</p>';}
+function myPro(){const u=currentUser();return u?db.professionals.find(p=>p.userId===u.id):null;}
+const PRO_VERIF={pendente:['b-p','⏳ Verificação pendente'],em_analise:['b-p','🔍 Em análise pela equipa VEG'],verificado:['b-g','✔ Profissional verificado pela VEG'],rejeitado:['b-r','✖ Verificação rejeitada']};
+function renderProForm(u){const pr=myPro();const st=$('#prStatus');if(st){if(pr){const v=PRO_VERIF[pr.verificationStatus||'pendente']||PRO_VERIF.pendente;st.innerHTML='<span class="bdg '+v[0]+'">'+v[1]+'</span>'+(pr.verificationReason?' <small style="color:var(--mut)">'+esc(pr.verificationReason)+'</small>':'');}else st.innerHTML='<small style="color:var(--mut)">Ainda não tem perfil profissional. Preencha abaixo para o criar.</small>';}
+ if($('#prEsp')&&document.activeElement!==$('#prEsp')){$('#prEsp').value=pr?pr.specialty||'':'';$('#prExp').value=pr?pr.experience||'':'';$('#prServ').value=pr?pr.services||'':'';$('#prProv').value=pr?pr.province||'':'';$('#prMun').value=pr?pr.municipality||'':'';$('#prDisp').value=pr?pr.availability||'':'';$('#prBio').value=pr?pr.bio||'':'';$('#prPort').value=pr?pr.portfolio||'':'';$('#prVis').value=pr?pr.visibility||'privado':'privado';}}
+function saveProfessional(e){e.preventDefault();if(!requireLogin())return;const u=currentUser();let pr=myPro();
+ const data={specialty:$('#prEsp').value.trim(),experience:$('#prExp').value,services:$('#prServ').value.trim(),province:$('#prProv').value,municipality:$('#prMun').value.trim(),availability:$('#prDisp').value.trim(),bio:$('#prBio').value.trim(),portfolio:$('#prPort').value.trim(),visibility:$('#prVis').value};
+ if(pr){Object.assign(pr,data);pr.updatedAt=new Date().toISOString();}
+ else{pr={id:uid(),userId:u.id,verificationStatus:'pendente',status:'ativo',createdAt:new Date().toISOString(),...data};db.professionals.push(pr);notify(u.id,'🧰 Perfil profissional criado! A equipa VEG irá verificá-lo antes de qualquer publicação.');}
+ logAction('Perfil profissional guardado',data.specialty);saveDB();renderPerfil();toast('Perfil profissional guardado no seu VEG ID.','ok');}
 function saveProfile(e){e.preventDefault();const u=currentUser();const oldMail=u.email;
  Object.assign(u,{name:$('#pfNomeIn').value.trim(),profession:$('#pfProf').value.trim(),email:$('#pfEmailIn').value.trim(),phone:$('#pfTelIn').value.trim(),province:$('#pfProvIn').value,interests:$('#pfInt').value.trim(),idade:$('#pfIdade').value});
  if(oldMail!==u.email)logAction('E-mail alterado',oldMail+' → '+u.email);saveDB();enterApp();toast('Perfil actualizado.','ok');}
-function deleteAccount(){if(!confirm('Tem a certeza? Esta acção elimina a sua conta e os seus dados deste dispositivo.'))return;const u=currentUser();logAction('Conta eliminada',u.email);db.users=db.users.filter(x=>x.id!==u.id);db.businesses=db.businesses.filter(b=>b.userId!==u.id);db.products=db.products.filter(p=>p.userId!==u.id);db.leads=db.leads.filter(l=>l.userId!==u.id);db.sols=db.sols.filter(s=>s.userId!==u.id);db.session=null;saveDB();doLogout();toast('Conta eliminada.','ok');}
+function deleteAccount(){if(!confirm('Tem a certeza? Esta acção elimina a sua conta e os seus dados deste dispositivo.'))return;const u=currentUser();logAction('Conta eliminada',u.email);db.users=db.users.filter(x=>x.id!==u.id);db.businesses=db.businesses.filter(b=>b.userId!==u.id);db.products=db.products.filter(p=>p.userId!==u.id);db.leads=db.leads.filter(l=>l.userId!==u.id);db.professionals=db.professionals.filter(p=>p.userId!==u.id);db.sols=db.sols.filter(s=>s.userId!==u.id);db.session=null;saveDB();doLogout();toast('Conta eliminada.','ok');}
 function legalModal(which){const PRIV='<h3 style="color:var(--navy);margin-bottom:8px">Política de Privacidade (resumo do MVP)</h3><ol style="font-size:.82rem;color:var(--mut);line-height:1.8;padding-left:18px"><li>Recolhemos apenas os dados necessários a cada finalidade (minimização).</li><li>Dados de saúde: evitamos armazenar informação clínica; os serviços são prestados por profissionais habilitados.</li><li>Não vendemos dados pessoais. Não expomos dados identificáveis publicamente.</li><li>Pode corrigir os seus dados no Perfil e eliminar a conta a qualquer momento.</li><li>Dados sensíveis de pagamento não são armazenados — o processamento é do provedor autorizado.</li><li>Registos de actividade (logs) protegem a plataforma e a sua conta.</li></ol>';
  const TERM='<h3 style="color:var(--navy);margin-bottom:8px">Termos de Utilização (resumo do MVP)</h3><ol style="font-size:.82rem;color:var(--mut);line-height:1.8;padding-left:18px"><li>A VEG APP é uma plataforma de negócios, serviços e soluções — não uma entidade pública.</li><li>Serviços públicos são orientados para as plataformas oficiais.</li><li>Parceiros «Verificados» passam por processo real de verificação.</li><li>Avaliações falsas, abusivas ou manipuladas são removidas.</li><li>Recomendações do VEG SMART são estimativas, não garantias.</li><li>Encomendas só são «pagas» após validação do provedor de pagamento.</li></ol>';
  modalT(which==='priv'?'Política de Privacidade':'Termos de Utilização',which==='priv'?PRIV:TERM);}
@@ -2388,6 +2770,35 @@ function saveCfg(){if(typeof isAdmin==='function'&&!isAdmin()){toast('⛔ Apenas
 
 /* ================= VEG ADMIN ================= */
 function renderAdmin(){if(!isAdmin())return;$('#adUsers').textContent=db.users.length;$('#adBiz').textContent=db.businesses.length;$('#adLeads').textContent=db.leads.length+db.sols.length;$('#adTickets').textContent=db.tickets.filter(t=>t.status==='Aberto'||t.status==='Em análise').length;}
+/* ================= FASE 7 — BLOCO 1: VERIFICAÇÕES (EMPRESAS & PROFISSIONAIS) =================
+   TESTE 4 da secção 34: o admin valida empresas/profissionais. A decisão é
+   registada no backend (updateBusinessStatus/updateProfessionalStatus —
+   auditoria server-side) e sincroniza como todas as entidades. */
+function adVerificacoes(box,head){
+ const VB={pendente:'b-p',em_analise:'b-p',verificada:'b-g',rejeitada:'b-r'};
+ const VL={pendente:'⏳ Pendente',em_analise:'🔍 Em análise',verificada:'✔ Verificada',rejeitada:'✖ Rejeitada'};
+ const brows=db.businesses.map(b=>{const o=db.users.find(x=>x.id===b.userId);const vs=b.verificationStatus||'pendente';return '<tr><td>'+esc(b.name)+(b.tradeName?'<br><small>'+esc(b.tradeName)+'</small>':'')+(b.testData?' <span class="bdg b-grey">TEST_DATA</span>':'')+'</td><td>'+esc(b.nif||'—')+'<br><small>'+esc(b.cat||'')+' · '+esc(b.province||'')+'</small></td><td>'+esc(o?o.name:'—')+'<br><small>'+esc(o?o.email:'')+'</small></td><td><span class="bdg '+(VB[vs]||'b-p')+'">'+(VL[vs]||vs)+'</span></td><td><button class="btn btn-green sm" onclick="setBizVerif(\''+b.id+'\',\'verificada\')">✔</button> <button class="btn btn-grey sm" onclick="setBizVerif(\''+b.id+'\',\'em_analise\')">🔍</button> <button class="btn btn-red sm" onclick="setBizVerif(\''+b.id+'\',\'rejeitada\')">✖</button></td></tr>';}).join('');
+ const VP={pendente:'b-p',em_analise:'b-p',verificado:'b-g',rejeitado:'b-r'};
+ const VPL={pendente:'⏳ Pendente',em_analise:'🔍 Em análise',verificado:'✔ Verificado',rejeitado:'✖ Rejeitado'};
+ const prows=db.professionals.map(pr=>{const o=db.users.find(x=>x.id===pr.userId);const vs=pr.verificationStatus||'pendente';return '<tr><td>'+esc(o?o.name:'—')+'<br><small>'+esc(o?o.email:'')+'</small></td><td>'+esc(pr.specialty||'—')+'<br><small>'+esc(pr.province||'')+(pr.municipality?' · '+esc(pr.municipality):'')+'</small></td><td><span class="bdg '+(VP[vs]||'b-p')+'">'+(VPL[vs]||vs)+'</span></td><td><button class="btn btn-green sm" onclick="setProVerif(\''+pr.id+'\',\'verificado\')">✔</button> <button class="btn btn-grey sm" onclick="setProVerif(\''+pr.id+'\',\'em_analise\')">🔍</button> <button class="btn btn-red sm" onclick="setProVerif(\''+pr.id+'\',\'rejeitado\')">✖</button></td></tr>';}).join('');
+ box.innerHTML=head('🪪 Verificações — Empresas & Profissionais (Fase 7)')
+  +'<div class="notice">A verificação é um <b>dado verificado</b> (base do VEG TRUST): só entidades verificadas poderão aparecer como públicas na pesquisa unificada. Todas as decisões ficam na auditoria central.</div>'
+  +'<h4 style="margin:14px 0 6px">🏢 Empresas</h4><div class="twrap"><table><tr><th>Empresa</th><th>NIF / Categoria</th><th>Proprietário</th><th>Verificação</th><th>Acções</th></tr>'+(brows||'<tr><td colspan="5" style="text-align:center;color:var(--mut)">Sem empresas registadas.</td></tr>')+'</table></div>'
+  +'<h4 style="margin:18px 0 6px">🧰 Profissionais independentes</h4><div class="twrap"><table><tr><th>Profissional</th><th>Especialidade</th><th>Verificação</th><th>Acções</th></tr>'+(prows||'<tr><td colspan="4" style="text-align:center;color:var(--mut)">Sem perfis profissionais.</td></tr>')+'</table></div>';
+}
+function setBizVerif(id,st){const b=db.businesses.find(x=>x.id===id);if(!b)return;
+ let reason='';if(st==='rejeitada'){reason=prompt('Motivo da rejeição (fica registado e é comunicado ao proprietário):')||'';}
+ const before=b.verificationStatus||'pendente';
+ b.verificationStatus=st;b.verifiedAt=new Date().toISOString();if(reason)b.verificationReason=reason;else delete b.verificationReason;
+ try{VEG_API.post('updateBusinessStatus',{id:id,status:st,reason:reason});}catch(e){}
+ if(b.userId)notify(b.userId,'🏢 Verificação da empresa «'+b.name+'»: '+(st==='verificada'?'APROVADA ✔ — a sua empresa está verificada pela VEG.':st==='em_analise'?'em análise pela equipa VEG.':'REJEITADA.'+(reason?' Motivo: '+reason:'')));
+ logAction('Verificação empresa: '+before+' → '+st,b.name);saveDB();adminTab('verificacoes');toast('Estado de verificação actualizado.','ok');}
+function setProVerif(id,st){const pr=db.professionals.find(x=>x.id===id);if(!pr)return;
+ let reason='';if(st==='rejeitado'){reason=prompt('Motivo da rejeição:')||'';}
+ pr.verificationStatus=st;pr.verifiedAt=new Date().toISOString();if(reason)pr.verificationReason=reason;else delete pr.verificationReason;
+ try{VEG_API.post('updateProfessionalStatus',{id:id,status:st,reason:reason});}catch(e){}
+ if(pr.userId)notify(pr.userId,'🧰 Verificação do seu perfil profissional: '+(st==='verificado'?'APROVADA ✔ — está verificado pela VEG.':st==='em_analise'?'em análise pela equipa VEG.':'REJEITADA.'+(reason?' Motivo: '+reason:'')));
+ logAction('Verificação profissional → '+st,pr.specialty||id);saveDB();adminTab('verificacoes');toast('Estado de verificação actualizado.','ok');}
 function adminTab(t){const box=$('#adminBox');const su=role()==='superadmin';
  const head=x=>'<h3><span class="dot"></span>'+x+'</h3>';
  if(t==='saldo'){box.innerHTML=adRenderSaldo();adShowUser();}
@@ -2398,6 +2809,10 @@ function adminTab(t){const box=$('#adminBox');const su=role()==='superadmin';
  if(t==='parceiros'){adPartners(box,head);return;}
 else if(t==='agendamentos'){adAppts(box,head);return;}
 else if(t==='liquidacoes'){adSettlements(box,head);return;}
+ else if(t==='encomendas'){adOrders(box,head);return;}
+ else if(t==='regras'){adRules(box,head);return;}
+ if(t==='verificacoes'){adVerificacoes(box,head);return;}
+ if(t==='oportunidades'){adOpportunities(box,head);return;}
  if(t==='utilizadores'){const rows=db.users.map(u=>'<tr><td>'+esc(u.name)+'<br><small>'+esc(u.email)+' · '+esc(u.phone)+'</small></td><td><select onchange="setRole(\''+u.id+'\',this.value)" '+(su?'':'disabled')+'><option '+(u.role==='user'?'selected':'')+' value="user">Utilizador</option><option '+(u.role==='business'?'selected':'')+' value="business">Empresarial</option><option '+(u.role==='staff'?'selected':'')+' value="staff">Funcionário VEG</option><option '+(u.role==='admin'?'selected':'')+' value="admin">Administrador</option><option '+(u.role==='superadmin'?'selected':'')+' value="superadmin">Admin. Principal</option></select></td><td><button class="btn btn-grey sm" onclick="toggleUserActive(\''+u.id+'\')">'+(u.active===false?'Reactivar':'Suspender')+'</button></td></tr>').join('');
   box.innerHTML=head('👥 Utilizadores e permissões')+(su?'':'<div class="notice">🔒 Apenas o Administrador Principal pode alterar funções.</div>')+'<div class="twrap"><table><tr><th>Utilizador</th><th>Função (RBAC)</th><th>Estado</th></tr>'+rows+'</table></div>';}
  if(t==='tickets'){const rows=db.tickets.map(tk=>{const u=db.users.find(x=>x.id===tk.userId);return '<tr><td><b>'+esc(tk.code)+'</b><br><small>'+esc(u?u.name:'—')+'</small></td><td>'+esc(tk.subject)+'<br><small>'+esc(tk.desc.slice(0,60))+(tk.desc.length>60?'…':'')+'</small></td><td><select onchange="setTicketStatus(\''+tk.id+'\',this.value)">'+TICKET_STATES.map(x=>'<option '+(x===tk.status?'selected':'')+'>'+x+'</option>').join('')+'</select></td><td>'+(tk.rating?tk.rating+'★':'—')+'</td></tr>';}).join('');
@@ -2424,19 +2839,22 @@ let adPtFilter='todos';
 const PT_TRANSITIONS={pendente:['em_analise','aprovado','rejeitado'],em_analise:['aprovado','rejeitado','pendente'],aprovado:['rejeitado','cancelado','em_analise'],ativo:['suspenso','expirado','cancelado'],suspenso:['ativo','cancelado','em_analise'],rejeitado:['em_analise'],cancelado:['em_analise'],expirado:['em_analise','ativo'],inactivo:['em_analise']};
 function adPartners(box,head){
  const counts={};db.partners.forEach(p=>counts[p.status]=(counts[p.status]||0)+1);
- const chips=[['todos','Todos'],['pendente','Pendentes'],['em_analise','Em análise'],['aprovado','Aprovados'],['ativo','Activos'],['suspenso','Suspensos'],['rejeitado','Rejeitados'],['expirado','Expirados'],['cancelado','Cancelados']];
- const list=db.partners.filter(p=>adPtFilter==='todos'||p.status===adPtFilter).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+ const chips=[['todos','Todos'],['pedido_adesao','Pedidos de adesão'],['em_analise','Em análise'],['aprovado','Aprovados'],['ativo','Activos'],['suspenso','Suspensos'],['rejeitado','Rejeitados'],['terminado','Terminados'],['cancelado','Cancelados']];
+ const list=db.partners.filter(p=>adPtFilter==='todos'||vegEligLocal(p)===adPtFilter||p.status===adPtFilter).sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
  const rows=list.map(p=>{
   const own=db.users.find(u=>u.id===p.userId);
   const vu=p.validUntil?new Date(p.validUntil).toLocaleDateString('pt-PT'):'—';
   const A=[];
-  if(p.status==='pendente'){A.push('<button class="btn btn-blue sm" onclick="setPartnerState(\''+p.id+'\',\'em_analise\')">🔎 Iniciar análise</button>');A.push('<button class="btn btn-green sm" onclick="setPartnerState(\''+p.id+'\',\'aprovado\')">✔ Aprovar</button>');A.push('<button class="btn btn-red sm" onclick="setPartnerState(\''+p.id+'\',\'rejeitado\')">✖ Rejeitar</button>');}
-  else if(p.status==='em_analise'){A.push('<button class="btn btn-green sm" onclick="setPartnerState(\''+p.id+'\',\'aprovado\')">✔ Aprovar</button>');A.push('<button class="btn btn-red sm" onclick="setPartnerState(\''+p.id+'\',\'rejeitado\')">✖ Rejeitar</button>');}
-  else if(p.status==='aprovado'){A.push('<button class="btn btn-gold sm" onclick="verifyPartner(\''+p.id+'\')">✔ Verificar → Activo</button>');A.push('<button class="btn btn-red sm" onclick="setPartnerState(\''+p.id+'\',\'rejeitado\')">✖ Rejeitar</button>');}
-  else if(p.status==='ativo'){A.push('<button class="btn btn-gold sm" onclick="setPartnerState(\''+p.id+'\',\'suspenso\')">⏸ Suspender</button>');A.push('<button class="btn btn-grey sm" onclick="setPartnerState(\''+p.id+'\',\'expirado\')">⌛ Expirar</button>');A.push('<button class="btn btn-red sm" onclick="setPartnerState(\''+p.id+'\',\'cancelado\')">✖ Cancelar</button>');}
-  else if(p.status==='suspenso'){A.push('<button class="btn btn-green sm" onclick="setPartnerState(\''+p.id+'\',\'ativo\')">▶ Reactivar</button>');A.push('<button class="btn btn-red sm" onclick="setPartnerState(\''+p.id+'\',\'cancelado\')">✖ Cancelar</button>');}
-  else{A.push('<button class="btn btn-blue sm" onclick="setPartnerState(\''+p.id+'\',\'em_analise\')">↻ Reabrir análise</button>');}
-  return '<tr><td><b>'+esc(p.name)+'</b><br><small>'+esc(p.nif||'—')+' · candidato: '+(own?esc(own.name):'—')+'</small></td><td>'+esc(p.cat)+'<br><small>'+esc(p.province)+' · '+esc(p.whatsapp)+'</small>'+(p.email?'<br><small>✉ '+esc(p.email)+'</small>':'')+(p.site?'<br><small>🌐 '+esc(p.site)+'</small>':'')+'</td><td>'+(partnerBadge(p.status)||'')+(p.verified?' <span class="bdg b-gold">✔ Verificado</span>':'')+'<br><small>Acordo até: '+vu+'</small></td><td>'+A.join(' ')+'<br><button class="btn btn-grey sm" style="margin-top:4px" onclick="viewPartner(\''+p.id+'\')">👁 Dossiê/Editar</button></td></tr>';
+  /* FASE 7 — Bloco 3: as deliberações passam pelo servidor
+     (updatePartnerEligibility) — com máquina de estados e motivo obrigatório. */
+  const E=vegEligLocal(p);
+  if(E==='pedido_adesao'){A.push('<button class="btn btn-blue sm" onclick="vegEligAction(\''+p.id+'\',\'em_analise\')">🔎 Iniciar análise</button>');A.push('<button class="btn btn-red sm" onclick="vegEligAction(\''+p.id+'\',\'rejeitado\')">✖ Rejeitar</button>');}
+  else if(E==='em_analise'){A.push('<button class="btn btn-green sm" onclick="vegEligAction(\''+p.id+'\',\'aprovado\')">✔ Aprovar</button>');A.push('<button class="btn btn-red sm" onclick="vegEligAction(\''+p.id+'\',\'rejeitado\')">✖ Rejeitar</button>');}
+  else if(E==='aprovado'){A.push('<button class="btn btn-gold sm" onclick="vegEligAction(\''+p.id+'\',\'ativo\')">✔ Activar parceria formal</button>');A.push('<button class="btn btn-gold sm" onclick="vegEligAction(\''+p.id+'\',\'suspenso\')">⏸ Suspender</button>');}
+  else if(E==='ativo'){A.push('<button class="btn btn-gold sm" onclick="vegEligAction(\''+p.id+'\',\'suspenso\')">⏸ Suspender</button>');A.push('<button class="btn btn-red sm" onclick="vegEligAction(\''+p.id+'\',\'terminado\')">✖ Terminar parceria</button>');}
+  else if(E==='suspenso'){A.push('<button class="btn btn-green sm" onclick="vegEligAction(\''+p.id+'\',\'em_analise\')">🔎 Reanalisar</button>');A.push('<button class="btn btn-green sm" onclick="vegEligAction(\''+p.id+'\',\'ativo\')">▶ Reactivar</button>');A.push('<button class="btn btn-red sm" onclick="vegEligAction(\''+p.id+'\',\'terminado\')">✖ Terminar</button>');}
+  else{A.push('<button class="btn btn-blue sm" onclick="vegEligAction(\''+p.id+'\',\'em_analise\')">↻ Reabrir análise</button>');}
+  return '<tr><td><b>'+esc(p.name)+'</b><br><small>'+esc(p.nif||'—')+' · candidato: '+(own?esc(own.name):'—')+'</small></td><td>'+esc(p.cat)+'<br><small>'+esc(p.province)+' · '+esc(p.whatsapp)+'</small>'+(p.email?'<br><small>✉ '+esc(p.email)+'</small>':'')+(p.site?'<br><small>🌐 '+esc(p.site)+'</small>':'')+'</td><td>'+(partnerBadge(vegEligLocal(p))||'')+(p.verified?' <span class="bdg b-gold">✔ Verificado</span>':'')+'<br><small>Acordo até: '+vu+'</small></td><td>'+A.join(' ')+'<br><button class="btn btn-grey sm" style="margin-top:4px" onclick="viewPartner(\''+p.id+'\')">👁 Dossiê/Editar</button> <button class="btn btn-blue sm" style="margin-top:4px" onclick="vegTrustModal(\'partner\',\''+p.id+'\')">🛡️ VEG TRUST</button></td></tr>';
  }).join('');
  box.innerHTML=head('🤝 Gestão de Parceiros VEG')+
  '<div class="notice">🛡️ <b>Deliberação administrativa:</b> consulte o dossiê antes de decidir. <b>Aprovar</b> = credenciado (ainda não visível). <b>Verificar</b> = Activo + selo público «Parceiro VEG Verificado». Suspenso/Expirado/Cancelado sai automaticamente da pesquisa. Toda a deliberação fica registada na auditoria e notifica o candidato.</div>'+
@@ -2476,7 +2894,7 @@ function setRole(id,r){if(role()!=='superadmin'){toast('⛔ Apenas o Administrad
  logAction('Função alterada: '+u.role+' → '+r,u.email);u.role=r;notify(u.id,'🔑 A sua função foi actualizada para: '+ROLE_NAMES[r]+'.');saveDB();adminTab('utilizadores');enterApp();}
 function toggleUserActive(id){if(role()!=='superadmin'){toast('⛔ Apenas o Administrador Principal pode suspender contas.','er');return;}const u=db.users.find(x=>x.id===id);if(u.id===currentUser().id){toast('Não pode suspender a si próprio.','er');return;}u.active=u.active===false?true:false;logAction(u.active?'Conta reactivada':'Conta suspensa',u.email);saveDB();adminTab('utilizadores');}
 function setTicketStatus(id,st){const t=db.tickets.find(x=>x.id===id);t.status=st;notify(t.userId,'🎫 Ticket '+t.code+': «'+st+'».');logAction('Ticket → '+st,t.code);saveDB();adminTab('tickets');renderTickets();}
-function setPayStatus(id,st){const p=db.payments.find(x=>x.id===id);p.status=st;if(st==='Confirmado'&&p.wallet)creditWallet(p);notify(p.userId,'💳 Pagamento '+p.ref+' '+st.toLowerCase()+'.');logAction('Pagamento → '+st,p.ref);saveDB();adminTab('financeiro');renderFinance();}
+function setPayStatus(id,st){const p=db.payments.find(x=>x.id===id);p.status=st;if(st==='Confirmado'&&p.wallet)creditWallet(p);const nid=uid();notify(p.userId,'💳 Pagamento '+p.ref+' '+st.toLowerCase()+'.',nid);vegNotifyRemote(p.userId,'💳 Pagamento '+p.ref+' '+st.toLowerCase()+'.',nid);logAction('Pagamento → '+st,p.ref);saveDB();adminTab('financeiro');renderFinance();}
 
 function showRecover(){doLogout();authTab('rec');}
 /* ================= VEG SALDO ================= */
@@ -2540,8 +2958,11 @@ const BONUS_PCT={'Diário':2,'Semanal':3,'Quinzenal':4,'Mensal':5};
 function creditWallet(pay){const u=db.users.find(x=>x.id===pay.userId);if(!u)return;const w=ensureWallet(u);
  const credit=+pay.amount||0;const op=vegCreditWallet(u,credit,pay.currency||'Kz',pay.ref,'Carregamento de saldo confirmado');
  const t=w.tx.find(x=>x.ref===pay.ref);if(t)t.status='Confirmado';
- notify(u.id,'💰 Carregamento confirmado! Saldo disponível: '+fmtMoney(w.balance,pay.currency||'Kz')+'.');logAction('Saldo creditado: +'+fmtMoney(credit,pay.currency||'Kz'),pay.ref);
- const ind=db.indications.find(i=>i.inviteeEmail===u.email);if(ind){const inv=db.users.find(x=>x.id===ind.inviterId);const pct=BONUS_PCT['Mensal']||5;if(inv&&pct>0){const bonus=Math.round(pay.amount*pct)/100;const op2=vegCreditWallet(inv,bonus,pay.currency||'Kz','BONUS-'+pay.ref,'Bónus VEG INDICA '+pct+'%');if(op2){notify(inv.id,'🎁 Bónus VEG INDICA: +'+fmtMoney(bonus,pay.currency||'Kz')+' de saldo porque '+u.name+' carregou saldo.');logAction('Bónus VEG INDICA +'+fmtMoney(bonus,pay.currency||'Kz'),inv.email);}}}
+ const nid=uid();
+ notify(u.id,'💰 Carregamento confirmado! Saldo disponível: '+fmtMoney(w.balance,pay.currency||'Kz')+'.',nid);
+ vegNotifyRemote(u.id,'💰 Carregamento confirmado! Saldo disponível: '+fmtMoney(w.balance,pay.currency||'Kz')+'.',nid);
+ logAction('Saldo creditado: +'+fmtMoney(credit,pay.currency||'Kz'),pay.ref);
+ const ind=db.indications.find(i=>i.inviteeEmail===u.email);if(ind){const inv=db.users.find(x=>x.id===ind.inviterId);const pct=BONUS_PCT['Mensal']||5;if(inv&&pct>0){const bonus=Math.round(pay.amount*pct)/100;const op2=vegCreditWallet(inv,bonus,pay.currency||'Kz','BONUS-'+pay.ref,'Bónus VEG INDICA '+pct+'%');if(op2){const bid=uid();notify(inv.id,'🎁 Bónus VEG INDICA: +'+fmtMoney(bonus,pay.currency||'Kz')+' de saldo porque '+u.name+' carregou saldo.',bid);vegNotifyRemote(inv.id,'🎁 Bónus VEG INDICA: +'+fmtMoney(bonus,pay.currency||'Kz')+' de saldo porque '+u.name+' carregou saldo.',bid);logAction('Bónus VEG INDICA +'+fmtMoney(bonus,pay.currency||'Kz'),inv.email);}}}
  saveDB();if(typeof renderSaldo==='function')renderSaldo();}
 function updateSaldoBar(){const bar=$('#saldoBar');if(!bar)return;const u=currentUser();if(!u||!db.wallets||!db.wallets[u.id]){bar.classList.add('hidden');return;}const w=db.wallets[u.id];const days=Math.ceil((w.activeUntil-Date.now())/86400000);bar.classList.remove('hidden');
  if(isFreeAccess(u)){bar.style.background='#F1ECDC';bar.style.color='#8A6A0B';bar.style.borderBottom='1px solid #E4D9B8';bar.innerHTML='🎖️ Acesso VEG <b>GRATUITO</b> ('+(ROLE_NAMES[u.role]||'Parceiro VEG')+') — sem pagamento de saldo, conforme normas internas da VEG.';return;}
@@ -2576,6 +2997,407 @@ function adminGate(s){const u=currentUser();modalT('🛡️ Confirmação de seg
 function adminUnlock(s){const u=currentUser();const p=document.getElementById('admPass');if(!p||p.value!==u.pass){toast('⛔ Senha incorrecta. A tentativa foi registada nos logs.','er');logAction('Falha de confirmação de senha no acesso ao VEG ADMIN',u.email);if(p){p.value='';p.focus();}return;}adminUnlocked=true;logAction('Acesso confirmado ao VEG ADMIN (senha validada)',u.email);document.querySelectorAll('.mback').forEach(m=>m.remove());go(s);}
 /* Clique nos botões do menu — delegação de eventos */
 document.addEventListener('click',function(e){const a=e.target.closest('nav a[data-s]');if(a&&a.style.display!=='none'){e.preventDefault();go(a.dataset.s);}});
+
+/* ================================================================
+   FASE 7 — BLOCO 2 (P8/P9/P10): VEG SEARCH · VEG MATCH · OPPORTUNITIES
+   A pesquisa unificada é uma acção PÚBLICA do backend (publicSearch) —
+   devolve apenas projecções públicas (B-08); com o backend offline, cai
+   numa projecção local equivalente (regra de confiança no cliente).
+   ================================================================ */
+const VQ_TIPOS=[['todos','Todos'],['parceiros','Parceiros'],['empresas','Empresas'],['profissionais','Profissionais'],['produtos','Produtos'],['oportunidades','Oportunidades']];
+let vqTipo='todos';
+function renderSearch(){
+ const tp=$('#vqTipos');if(tp)tp.innerHTML=VQ_TIPOS.map(t=>'<span'+(vqTipo===t[0]?' class="on"':'')+' onclick="vqTipo=\''+t[0]+'\';renderSearch();vegDoSearch()" style="cursor:pointer">'+t[1]+'</span>').join('');
+ const rule=$('#vqRule');if(rule)rule.innerHTML='🛡️ <b>Regra de confiança VEG (secção 10):</b> só aparece o publicável — parceiro aprovado+verificado+vigente · empresa pública+verificada · profissional público+verificado · produto activo com stock · oportunidade publicada. Resultados sem dados privados (sem e-mail, NIF ou identificadores internos).';
+}
+function vegSearchFromHome(){const q=($('#smartQ').value||'').trim();go('pesquisa');if(q)$('#vq').value=q;vegDoSearch();}
+/* Alias: o botão da página inicial invoca vegDoSearchFromHome (regressão do Bloco 2 corrigida). */
+function vegDoSearchFromHome(){vegSearchFromHome();}
+/* Regra de publicação replicada no cliente SÓ como fallback offline —
+   a decisão definitiva é sempre do backend (publicSearch). */
+function vegLocalPublic(kind,x){
+ const today=new Date().toISOString().slice(0,10);
+ if(kind==='parceiro')return (x.status==='aprovado'||x.status==='ativo')&&x.verified!==false&&(!x.validUntil||String(x.validUntil)>=today);
+ if(kind==='empresa')return x.active!==false&&x.visibility==='publico'&&(x.verificationStatus||'pendente')==='verificada';
+ if(kind==='profissional')return x.status!=='inativo'&&x.visibility==='publico'&&(x.verificationStatus||'pendente')==='verificado';
+ if(kind==='produto'){if((x.status||'ativo')!=='ativo')return false;if(x.stock!=null&&x.stock!==''&&+x.stock<=0)return false;return true;}
+ if(kind==='oportunidade')return x.status==='publicada'&&x.visibility==='publico';
+ return false;}
+function vegNormLocal(s){return String(s==null?'':s).toLowerCase()
+ .replace(/[áàâã]/g,'a').replace(/[éèê]/g,'e').replace(/[íìî]/g,'i')
+ .replace(/[óòôõ]/g,'o').replace(/[úùû]/g,'u').replace(/ç/g,'c');}
+/* Mesma regra lexical do backend (radical por desinências PT) p/ fallback. */
+function vegStemLocal(w){let s=String(w||'');
+ while(s.length>4){if(s.length>5&&s.slice(-2)==='es'){s=s.slice(0,-2);continue;}
+  const l=s.slice(-1);if(l==='s'||l==='a'||l==='o'){s=s.slice(0,-1);continue;}break;}
+ return s;}
+function vegWordMatchLocal(q,hay){const qw=vegNormLocal(q).split(/\s+/).filter(w=>w.length>1);
+ if(!qw.length)return true;const hw=vegNormLocal(hay).split(/[^a-z0-9]+/);
+ return qw.every(w=>{const ws=vegStemLocal(w);return hw.some(h=>{if(!h)return false;
+  if(h.indexOf(w)!==-1)return true;if(w.length<3)return h===w;const hs=vegStemLocal(h);
+  if(hs===ws)return true;
+  if(ws.length>=4&&hs.indexOf(ws)===0)return true;
+  if(hs.length>=4&&ws.indexOf(hs)===0)return true;return false;});});}
+function vegProjLocal(kind,x){
+ const biz=kind==='produto'?db.businesses.find(b=>b.id===x.bizId):null;
+ const base={kind:kind,id:x.id,name:x.name||x.title||'',category:x.cat||x.category||x.specialty||'',province:x.province||'',desc:String(x.desc||x.description||x.bio||'').slice(0,220),verified:true};
+ if(kind==='parceiro'){base.whatsapp=x.whatsapp||'';base.site=x.site||'';}
+ else if(kind==='empresa'){base.tradeName=x.tradeName||'';base.city=x.city||'';base.whatsapp=x.whatsapp||'';base.web=x.web||'';}
+ else if(kind==='profissional'){base.specialty=x.specialty||'';base.services=x.services||'';base.municipality=x.municipality||'';base.experience=x.experience||'';}
+ else if(kind==='produto'){base.type=x.type||'Produto';base.price=x.price!=null?x.price:null;base.stock=(x.stock!=null&&x.stock!=='')?+x.stock:null;base.businessName=biz?biz.name:'VEG Market';base.businessVerified=biz?vegLocalPublic('empresa',biz):false;base.verified=base.businessVerified;}
+ else if(kind==='oportunidade'){const pub=db.users.find(u=>u.id===(x.publisherId||x.userId));base.type=x.type||'';base.value=x.value!=null?x.value:null;base.publisherName=pub?(pub.name||'VEG'):'VEG';}
+ return base;}
+async function vegDoSearch(){
+ renderSearch();
+ const q=$('#vq').value.trim();const prov=$('#vqProv').value||'';const sort=$('#vqSort').value||'tipo';
+ const out=$('#vqOut');out.innerHTML='<div class="empty"><div class="big">⏳</div>A pesquisar no ecossistema VEG...</div>';
+ let results=null;let fromServer=false;let rule='';
+ try{const res=await VEG_API.post('publicSearch',{q:q,tipo:vqTipo,province:prov,limit:60});
+  if(res.success&&res.data){results=res.data.results||[];fromServer=true;rule=res.data.rule||'';}}catch(e){}
+ if(!results){ /* fallback offline */
+  const all=[];const bizById={};db.businesses.forEach(b=>{bizById[b.id]=b;});
+  if(vqTipo==='todos'||vqTipo==='parceiros')db.partners.filter(x=>vegLocalPublic('parceiro',x)).forEach(x=>all.push(vegProjLocal('parceiro',x)));
+  if(vqTipo==='todos'||vqTipo==='empresas')db.businesses.filter(x=>vegLocalPublic('empresa',x)).forEach(x=>all.push(vegProjLocal('empresa',x)));
+  if(vqTipo==='todos'||vqTipo==='profissionais')db.professionals.filter(x=>vegLocalPublic('profissional',x)).forEach(x=>all.push(vegProjLocal('profissional',x)));
+  if(vqTipo==='todos'||vqTipo==='produtos')db.products.filter(x=>vegLocalPublic('produto',x)&&(!x.bizId||vegLocalPublic('empresa',bizById[x.bizId]))).forEach(x=>all.push(vegProjLocal('produto',x)));
+  if(vqTipo==='todos'||vqTipo==='oportunidades')db.opportunities.filter(x=>vegLocalPublic('oportunidade',x)).forEach(x=>all.push(vegProjLocal('oportunidade',x)));
+  results=all.filter(x=>vegWordMatchLocal(q,JSON.stringify(x))).filter(x=>!prov||x.province===prov).slice(0,60);
+ }
+ if(sort==='az')results.sort((a,b)=>String(a.name).localeCompare(String(b.name),'pt'));
+ out.innerHTML=(results.length?results.map(vegResultCard).join(''):'<div class="empty" style="grid-column:1/-1"><div class="big">🔍</div><b>Nenhum resultado publicável para «'+esc(q)+'».</b><br>A pesquisa pública só mostra entidades que cumprem a regra de confiança VEG. Tente outros termos ou fale connosco pelo atendimento.</div>')
+  +'<p style="font-size:.72rem;color:#9AA7BC;margin-top:12px">'+(fromServer?'✔ Pesquisa executada no backend central (regra de confiança aplicada no servidor).':'⚠ Backend offline — resultados calculados a partir do cache local deste dispositivo.')+(rule?' · '+esc(rule):'')+'</p>';
+}
+function vegResultCard(r){
+ const v=r.verified?' <span class="bdg b-gold" title="Entidade verificada pela VEG">✔ Verificada</span>':'';
+ let extra='';
+ if(r.kind==='parceiro')extra='<small>📱 '+esc(r.whatsapp||'—')+(r.site?' · 🌐 '+esc(r.site):'')+'</small>';
+ else if(r.kind==='empresa')extra='<small>'+(r.city?esc(r.city)+' · ':'')+'📱 '+esc(r.whatsapp||'—')+(r.web?' · 🌐 '+esc(r.web):'')+'</small>';
+ else if(r.kind==='profissional')extra='<small>'+esc(r.services||'')+(r.experience?' · '+esc(r.experience)+' ano(s) de experiência':'')+'</small>';
+ else if(r.kind==='produto')extra='<small>'+esc(r.businessName||'VEG Market')+' · '+(r.stock!=null?'Stock: '+r.stock:'stock livre')+'</small>';
+ else if(r.kind==='oportunidade')extra='<small>'+esc(r.type||'')+(r.value?' · '+fmtKz(r.value):'')+' · Publicado por '+esc(r.publisherName||'VEG')+'</small>';
+ let btn='';
+ if(r.kind==='parceiro'&&r.whatsapp)btn='<button class="btn btn-green sm" onclick="window.open(\'https://wa.me/'+esc(String(r.whatsapp).replace(/\D/g,''))+'\',\'_blank\')">💬 Contactar</button>';
+ else if(r.kind==='empresa'&&r.whatsapp)btn='<button class="btn btn-green sm" onclick="window.open(\'https://wa.me/'+esc(String(r.whatsapp).replace(/\D/g,''))+'\',\'_blank\')">💬 Contactar</button>';
+ else if(r.kind==='produto'&&db.products.some(p=>p.id===r.id&& (p.status||'ativo')==='ativo'&&!(p.stock!=null&&p.stock!==''&&+p.stock<=0)))btn='<button class="btn btn-gold sm" onclick="addCart(\''+r.id+'\')">+ Carrinho</button><button class="btn btn-green sm" onclick="askProduct(\''+r.id+'\')">💬 Perguntar</button>';
+ else if(r.kind==='oportunidade')btn='<button class="btn btn-gold sm" onclick="manifestInterestOpp(\''+r.id+'\')">🙋 Manifestar interesse</button>';
+ return '<div class="mkcard"><div class="img">'+(lbl[r.kind]||'🔍').split(' ')[0]+'</div><div class="bd"><span class="bdg b-p" style="font-size:.62rem">'+esc(lbl[r.kind]||r.kind)+'</span>'+v+'<br><b>'+esc(r.name)+'</b>'+(r.price!=null&&r.kind==='produto'?'<div class="pr">'+fmtKz(r.price)+'</div>':'')+'<small>'+esc(r.desc||'')+'</small>'+extra+'</div><div class="ft">'+btn+'</div></div>';
+}
+/* VEG MATCH (P9) — o backend devolve score + motivos legíveis; nunca esconde
+   os critérios usados (secção 11). Fallback offline: score local equivalente. */
+async function vegMatchRun(e){if(e)e.preventDefault();
+ const q=$('#vmQ').value.trim();if(!q){toast('Descreva primeiro a sua necessidade.','er');return false;}
+ const cat=$('#vmCat').value.trim();const prov=$('#vmProv').value||'';
+ const out=$('#vmOut');out.innerHTML='<div class="empty"><div class="big">🎯</div>A cruzar critérios objectivos no ecossistema VEG...</div>';
+ let matches=null;let fromServer=false;
+ try{const res=await VEG_API.post('vegMatch',{q:q,category:cat,province:prov,tipo:'todos',limit:8});
+  if(res.success&&res.data){matches=res.data.matches||[];fromServer=true;}}catch(e){}
+ if(!matches){ /* fallback offline com os MESMOS critérios documentados */
+  const all=[];const bizById={};db.businesses.forEach(b=>{bizById[b.id]=b;});
+  db.partners.filter(x=>vegLocalPublic('parceiro',x)).forEach(x=>all.push({proj:vegProjLocal('parceiro',x),category:x.cat||'',province:x.province||'',verified:true,experience:x.experience,haystack:x.name+' '+(x.cat||'')+' '+(x.desc||'')}));
+  db.businesses.filter(x=>vegLocalPublic('empresa',x)).forEach(x=>all.push({proj:vegProjLocal('empresa',x),category:x.cat||x.sector||'',province:x.province||'',verified:true,experience:x.experience,haystack:x.name+' '+(x.tradeName||'')+' '+(x.cat||'')+' '+(x.sector||'')+' '+(x.desc||'')}));
+  db.professionals.filter(x=>vegLocalPublic('profissional',x)).forEach(x=>all.push({proj:vegProjLocal('profissional',x),category:x.specialty||'',province:x.province||'',verified:true,experience:x.experience,haystack:(x.specialty||'')+' '+(x.services||'')+' '+(x.bio||'')}));
+  db.products.filter(x=>vegLocalPublic('produto',x)&&(!x.bizId||vegLocalPublic('empresa',bizById[x.bizId]))).forEach(x=>{const b=x.bizId?bizById[x.bizId]:null;all.push({proj:vegProjLocal('produto',x),category:x.type||'',province:b?b.province||'':'',verified:!!(b&&vegLocalPublic('empresa',b)),experience:null,haystack:x.name+' '+(x.desc||'')+' '+(b?b.name:'')});});
+  const crit={q:q,category:cat,province:prov};const norm=s=>String(s||'').toLowerCase();
+  matches=all.map(c=>{let score=0;const reasons=[];
+   if(crit.category&&norm(c.category).indexOf(norm(crit.category))!==-1){score+=40;reasons.push('Categoria compatível («'+crit.category+'»)');}
+   if(crit.province&&c.province===crit.province){score+=25;reasons.push('Actua na província de '+crit.province);}
+   if(crit.q){const words=norm(crit.q).split(/\s+/).filter(w=>w.length>2);const hw=norm(c.haystack).split(/[^a-z0-9]+/);let hits=0;words.forEach(w=>{const ws=vegStemLocal(w);if(hw.some(h=>{if(!h)return false;if(h.indexOf(w)!==-1)return true;if(w.length<3)return h===w;const hs=vegStemLocal(h);return hs===ws||(ws.length>=4&&hs.indexOf(ws)===0)||(hs.length>=4&&ws.indexOf(hs)===0);}))hits++;});if(hits>0){score+=Math.min(25,hits*8);reasons.push(hits+' palavra(s) da sua necessidade presentes no perfil');}}
+   if(c.verified){score+=10;reasons.push('Entidade verificada pela VEG');}
+   if(c.experience&&+c.experience>=3){score+=5;reasons.push('Experiência declarada de '+c.experience+' ano(s)');}
+   return Object.assign(c.proj,{score:score,reasons:reasons});}).filter(r=>r.score>0).sort((a,b)=>b.score-a.score).slice(0,8);
+ }
+ if(!matches.length){out.innerHTML='<div class="empty"><div class="big">🎯</div>Sem correspondências objectivas para os critérios indicados. Ajuste a categoria/província ou <a onclick="prefillSolic(\'\')">registe uma solicitação</a> para análise pela equipa VEG.</div>';return false;}
+ const max=Math.max.apply(null,matches.map(m=>m.score))||1;
+ out.innerHTML=matches.map(function(m){const pct=Math.round(m.score/max*100);
+  return '<div class="card" style="margin-bottom:10px;padding:14px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b style="color:var(--navy)">'+esc(m.name)+'</b>'+(m.verified?' <span class="bdg b-gold">✔ Verificada</span>':'')+'<span class="bdg b-p">compatibilidade '+pct+'%</span>'+(m.price!=null&&m.kind==='produto'?'<span style="color:var(--gold2);font-weight:700">'+fmtKz(m.price)+'</span>':'')+'</div>'
+  +'<div style="background:#EDF1F7;border-radius:8px;height:8px;margin:8px 0;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--gold),var(--gold2))"></div></div>'
+  +'<div style="font-size:.78rem;color:var(--mut)"><b>Porquê este resultado (critérios objectivos):</b><ul style="margin:4px 0 0 18px;line-height:1.8">'+m.reasons.map(r=>'<li>'+esc(r)+'</li>').join('')+'</ul></div></div>';}).join('')
+  +'<p style="font-size:.72rem;color:#9AA7BC">'+(fromServer?'✔ Correspondência calculada no backend central.':'⚠ Backend offline — correspondência calculada no cache local.')+' O VEG MATCH mostra sempre os critérios utilizados; o score é um indicador, não uma garantia.</p>';
+ return false;}
+
+/* ============ VEG OPPORTUNITIES (P10) ============ */
+const OPP_ST={pendente:['b-p','⏳ Pendente (moderação)'],publicada:['b-g','✔ Publicada'],fechada:['b-grey','Fechada'],rejeitada:['b-r','✖ Rejeitada']};
+function renderOpps(){
+ const pub=db.opportunities.filter(o=>o.status==='publicada'&&o.visibility==='publico').sort((a,b)=>new Date(b.createdAt||b.created||0)-new Date(a.createdAt||a.created||0));
+ $('#oppGrid').innerHTML=pub.length?pub.map(o=>'<div class="mkcard"><div class="img">💡</div><div class="bd"><b>'+esc(o.title)+'</b> <span class="bdg '+(OPP_ST[o.status]||OPP_ST.publicada)[0]+'">'+(OPP_ST[o.status]||OPP_ST.publicada)[1]+'</span><br><small>'+esc(o.type||'')+(o.value?' · <b style="color:var(--gold2)">'+fmtKz(o.value)+'</b>':'')+(o.province?' · '+esc(o.province):'')+(o.expiresAt?' · até '+esc(o.expiresAt):'')+'</small><small>'+esc(String(o.desc||o.description||'').slice(0,180))+'</small></div><div class="ft"><button class="btn btn-gold sm" onclick="manifestInterestOpp(\''+o.id+'\')">🙋 Manifestar interesse</button></div></div>').join(''):'<div class="empty" style="grid-column:1/-1"><div class="big">💡</div><b>Sem oportunidades publicadas de momento.</b><br>Proponha a primeira abaixo — após moderação do VEG ADMIN fica visível para toda a comunidade.</div>';
+ const u=currentUser();const mc=$('#oppMyCard');
+ if(!u){mc.classList.add('hidden');return;}
+ mc.classList.remove('hidden');
+ const mine=db.opportunities.filter(o=>o.userId===u.id||o.publisherId===u.id).sort((a,b)=>new Date(b.createdAt||b.created||0)-new Date(a.createdAt||a.created||0));
+ $('#oppMineTable').innerHTML='<tr><th>Título</th><th>Tipo</th><th>Valor</th><th>Província</th><th>Estado</th></tr>'+(mine.length?mine.map(o=>{const st=OPP_ST[o.status||'pendente']||OPP_ST.pendente;return '<tr><td><b>'+esc(o.title)+'</b>'+(o.reason&&o.status==='rejeitada'?'<br><small style="color:var(--red)">Motivo: '+esc(o.reason)+'</small>':'')+'</td><td>'+esc(o.type||'—')+'</td><td>'+(o.value?fmtKz(o.value):'—')+'</td><td>'+esc(o.province||'—')+'</td><td><span class="bdg '+st[0]+'">'+st[1]+'</span></td></tr>';}).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--mut)">Ainda não propôs oportunidades.</td></tr>');
+}
+/* Propor oportunidade: acção saveOpportunity (backend) — não-admin fica
+   SEMPRE pendente+privado (moderação obrigatória). */
+async function saveOpp(e){e.preventDefault();if(!requireLogin())return;
+ const u=currentUser();
+ const rec={id:uid(),title:$('#oppTitulo').value.trim(),type:$('#oppTipo').value,desc:$('#oppDesc').value.trim(),province:$('#oppProv').value,value:+$('#oppValor').value||0,expiresAt:$('#oppValidade').value||'',createdAt:new Date().toISOString()};
+ let status='pendente';
+ try{const res=await VEG_API.post('saveOpportunity',{opportunity:Object.assign({},rec)});
+  if(res.success&&res.data){if(res.data.id)rec.id=res.data.id;if(res.data.status)status=res.data.status;}
+  else if(res.error&&res.error.code!=='NETWORK_ERROR'&&res.error.code!=='NOT_CONFIGURED'){toast(res.message||'Não foi possível submeter a proposta.','er');return;}
+ }catch(e2){toast('Backend indisponível — proposta guardada localmente e sincronizada mais tarde.','er');}
+ rec.status=status;rec.visibility=status==='publicada'?'publico':'privado';rec.userId=u.id;rec.publisherId=u.id;
+ db.opportunities.push(rec);
+ logAction('Oportunidade proposta ('+status+')',rec.title);
+ db.users.filter(x=>x.role==='admin'||x.role==='superadmin').forEach(a=>notify(a.id,'💡 Nova oportunidade para moderação: '+rec.title));
+ saveDB();e.target.reset();renderOpps();
+ toast(status==='publicada'?'Oportunidade publicada.':'Oportunidade submetida — aguarda moderação do VEG ADMIN.','ok');}
+/* Manifestar interesse: acção manifestInterest (backend) — cria o lead no
+   CRM do publicador e notifica-o; duplicados são recusados (idempotente). */
+function manifestInterestOpp(id){if(!requireLogin())return;
+ const o=db.opportunities.find(x=>x.id===id);if(!o){toast('Oportunidade não encontrada.','er');return;}
+ modalT('🙋 Manifestar interesse — '+o.title,'<p style="font-size:.82rem;color:var(--mut);margin-bottom:10px">O publicador recebe <b>imediatamente</b> um lead no CRM VEG com os seus dados de contacto (nome e telefone da sua conta). Os contactos do publicador <b>não</b> lhe são revelados — a VEG medeia a primeira abordagem.</p><div class="fld"><label>Mensagem ao publicador (opcional)</label><textarea id="oppMsg" rows="3" placeholder="Ex.: Posso fornecer as 100 cadeiras até ao fim do mês, com entrega em Luanda."></textarea></div><button class="btn btn-gold sm" onclick="sendManifest(\''+id+'\')">📨 Enviar manifestação de interesse</button>');}
+async function sendManifest(id){
+ const btn=event.target;btn.disabled=true;
+ try{
+  const res=await VEG_API.post('manifestInterest',{opportunityId:id,message:($('#oppMsg')?$('#oppMsg').value.trim():'')});
+  if(res.success){document.querySelectorAll('.mback').forEach(m=>m.remove());logAction('Interesse manifestado numa oportunidade',id);toast('✔ Interesse registado. O publicador foi notificado e recebeu o seu contacto como lead.','ok');return;}
+  if(res.error&&res.error.code==='DUPLICATE'){document.querySelectorAll('.mback').forEach(m=>m.remove());toast('Já manifestou interesse nesta oportunidade.','er');return;}
+  toast(res.message||'Não foi possível registar o interesse.','er');
+ }catch(e){toast('Backend indisponível — tente novamente com ligação.','er');}
+ btn.disabled=false;}
+
+/* ============ VEG ADMIN — moderação de oportunidades (P10) ============ */
+function adOpportunities(box,head){
+ const counts={};db.opportunities.forEach(o=>counts[o.status]=(counts[o.status]||0)+1);
+ const chips=[['todos','Todas'],['pendente','Pendentes'],['publicada','Publicadas'],['fechada','Fechadas'],['rejeitada','Rejeitadas']];
+ const list=db.opportunities.filter(o=>window._adOppFilter==='todos'||!window._adOppFilter||o.status===window._adOppFilter).sort((a,b)=>new Date(b.createdAt||b.created||0)-new Date(a.createdAt||a.created||0));
+ const rows=list.map(o=>{const own=db.users.find(x=>x.id===(o.publisherId||o.userId));const st=OPP_ST[o.status||'pendente']||OPP_ST.pendente;
+  const A=[];if((o.status||'pendente')==='pendente'){A.push('<button class="btn btn-green sm" onclick="setOppStatus(\''+o.id+'\',\'publicada\')">✔ Publicar</button>');A.push('<button class="btn btn-red sm" onclick="setOppStatus(\''+o.id+'\',\'rejeitada\')">✖ Rejeitar</button>');}
+  if(o.status==='publicada'){A.push('<button class="btn btn-grey sm" onclick="setOppStatus(\''+o.id+'\',\'fechada\')">🏁 Fechar</button>');}
+  if(o.status==='rejeitada'||o.status==='fechada'){A.push('<button class="btn btn-blue sm" onclick="setOppStatus(\''+o.id+'\',\'publicada\')">↻ Republicar</button>');}
+  return '<tr><td><b>'+esc(o.title)+'</b><br><small>'+esc(String(o.desc||o.description||'').slice(0,80))+'</small></td><td>'+esc(o.type||'—')+'<br><small>'+esc(o.province||'—')+'</small></td><td>'+(o.value?fmtKz(o.value):'—')+'</td><td>'+esc(own?own.name:'VEG')+'</td><td><span class="bdg '+st[0]+'">'+st[1]+'</span>'+(o.reason?'<br><small style="color:var(--red)">'+esc(o.reason)+'</small>':'')+'</td><td>'+A.join(' ')+'</td></tr>';}).join('');
+ box.innerHTML=head('💡 Oportunidades — moderação VEG (Fase 7, Bloco 2)')
+  +'<div class="notice">🛡️ <b>Moderação obrigatória:</b> só o VEG ADMIN publica. Publicar torna a oportunidade visível em toda a comunidade e na pesquisa unificada. Rejeitar pede motivo (fica registado e é comunicado). Manifestações de interesse geram leads no CRM do publicador.</div>'
+  +'<div class="step">'+chips.map(c=>'<span'+((window._adOppFilter||'todos')===c[0]?' class="on"':'')+' onclick="window._adOppFilter=\''+c[0]+'\';adminTab(\'oportunidades\')" style="cursor:pointer">'+c[1]+' ('+(c[0]==='todos'?db.opportunities.length:(counts[c[0]]||0))+')</span>').join('')+'</div>'
+  +'<div class="twrap"><table><tr><th>Oportunidade</th><th>Tipo / Província</th><th>Valor</th><th>Publicador</th><th>Estado</th><th>Acções</th></tr>'+(rows||'<tr><td colspan="6" class="empty">Sem oportunidades registadas.</td></tr>')+'</table></div>';
+}
+async function setOppStatus(id,st){const o=db.opportunities.find(x=>x.id===id);if(!o)return;
+ let reason='';if(st==='rejeitada'){reason=prompt('Motivo da rejeição (obrigatório — fica registado e é comunicado ao proponente):')||'';if(!reason.trim()){toast('Rejeição cancelada: é obrigatório indicar o motivo.','er');return;}}
+ try{const res=await VEG_API.post('updateOpportunityStatus',{id:id,status:st,reason:reason});
+  if(!res.success&&res.error&&res.error.code!=='NETWORK_ERROR'&&res.error.code!=='NOT_CONFIGURED'){toast(res.message||'Operação recusada pelo servidor.','er');return;}}
+ catch(e){toast('Backend indisponível — decisão ficará sincronizada mais tarde.','er');}
+ o.status=st;if(st==='publicada')o.visibility='publico';if(st==='rejeitada'){o.reason=reason;o.visibility='privado';}if(st==='fechada')o.visibility='privado';
+ const pubId=o.publisherId||o.userId;
+ if(pubId){const msg=st==='publicada'?'💡 A sua oportunidade «'+o.title+'» foi PUBLICADA e já está visível na comunidade VEG.':st==='rejeitada'?'💡 A sua oportunidade «'+o.title+'» foi rejeitada. Motivo: '+reason:'💡 A sua oportunidade «'+o.title+'» foi fechada.';notify(pubId,msg);const nid=uid();vegNotifyRemote(pubId,msg,nid);}
+ logAction('Oportunidade → '+st,o.title);saveDB();adminTab('oportunidades');renderOpps();toast('Oportunidade actualizada: '+st,'ok');}
+
+/* ================= FASE 7 — BLOCO 3: OPERAÇÕES =================
+   Portal do Parceiro · Disponibilidade real · Fluxo de marcação ·
+   VEG TRUST · Regras comerciais · Estados da encomenda.
+   Regra de ouro: nenhum destes fluxos confirma nada sem a resposta do
+   backend — erro de rede = operação não concluída, comunicado ao utilizador. */
+const VEG_BOOKING_LB={pedido_enviado:['b-p','Pedido enviado'],em_validacao:['b-p','Em validação'],aguarda_parceiro:['b-gold','A aguardar resposta do parceiro'],aceite:['b-n','Aceite'],confirmado:['b-g','Confirmado'],rejeitado:['b-r','Rejeitado'],cancelado:['b-r','Cancelado'],concluido:['b-g','Concluído']};
+function vegBookingBadge(st){const m=VEG_BOOKING_LB[st]||['b-grey',st||'—'];return '<span class="bdg '+m[0]+'">'+m[1]+'</span>';}
+const VEG_ORDER_NEXT={
+ 'Recebido':['Em validação','Aceite','Cancelado'],
+ 'Em validação':['Aceite','Cancelado'],
+ 'Aceite':['Em preparação','Cancelado'],
+ 'Em preparação':['Enviado','Disponível para levantamento','Cancelado'],
+ 'Enviado':['Concluído'],
+ 'Disponível para levantamento':['Concluído'],
+ 'Concluído':[],
+ 'Cancelado':['Reembolsado'],
+ 'Reembolsado':[]
+};
+
+/* ---------- Marcação: consulta de disponibilidade no servidor ---------- */
+function vegLoadSlots(){
+ const wrap=$('#agSlotsWrap'),box=$('#agSlots');if(!wrap)return;
+ const pid=($('#agPartner')&&$('#agPartner').value)||'',date=($('#agData')&&$('#agData').value)||'';
+ $('#agSlot').value='';
+ if(!pid||!date){wrap.style.display='none';return;}
+ box.innerHTML='<small style="color:var(--mut)">⏳ A consultar disponibilidade no servidor...</small>';
+ wrap.style.display='block';
+ VEG_API.post('getAvailability',{providerType:'partner',providerId:pid,date:date}).then(function(res){
+  if(!res||!res.success){wrap.style.display='none';if(res&&res.error&&res.error.code==='NOT_ELIGIBLE')toast(res.message,'er');return;}
+  const d=res.data;
+  if(!d.configured){box.innerHTML='<small style="color:var(--mut)">⚠️ Este prestador ainda não configurou a agenda de disponibilidade — a VEG não pode confirmar horário automaticamente.</small>';return;}
+  if(d.blocked){box.innerHTML='<small style="color:var(--mut)">📅 Data bloqueada pelo prestador. Escolha outro dia.</small>';return;}
+  if(!d.free||!d.free.length){box.innerHTML='<small style="color:var(--mut)">😕 Sem horários livres nesta data. Escolha outro dia.</small>';return;}
+  window.__vegIdem='BKG-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
+  box.innerHTML='<small style="color:var(--green);display:block;width:100%;margin-bottom:4px">✔ '+d.free.length+' horário(s) livre(s) em '+esc(date)+(d.durationMin?' · duração '+d.durationMin+' min':'')+'</small>'+d.free.map(function(t){return '<button type="button" class="btn btn-grey sm" data-slot="'+t+'" onclick="vegPickSlot(\''+t+'\')">🕐 '+t+'</button>';}).join('');
+ }).catch(function(){box.innerHTML='<small style="color:var(--mut)">⚠️ Sem ligação — a disponibilidade só pode ser consultada online.</small>';});
+}
+function vegPickSlot(t){$('#agSlot').value=t;$$('#agSlots button[data-slot]').forEach(function(b){b.className='btn '+(b.dataset.slot===t?'btn-gold':'btn-grey')+' sm';});}
+function vegApptRefresh(){toast('A actualizar o estado das marcações...','ok');VEG_SYNC.pull({silent:false}).then(function(r){renderAgenda();if(r&&r.success)toast('Estado actualizado do servidor.','ok');else toast('Sem ligação — mostrando os dados locais.','er');});}
+
+/* ---------- Portal do Parceiro ---------- */
+let __ppData=null,__ppTab='pedidos';
+function renderPortal(){const u=currentUser();if(!u){go('inicio');return;}
+ ppRenderEleg();
+ $('#ppBox').innerHTML='<h3><span class="dot"></span>Portal do Parceiro</h3><div class="empty"><div class="big">⏳</div>A carregar os seus dados do servidor...</div>';
+ VEG_API.post('getPartnerPortal',{}).then(function(res){
+  if(res&&res.success){__ppData=res.data;
+   (res.data.bookings||[]).forEach(function(b){if(!db.appts.some(a=>a.id===b.id))db.appts.push(b);});
+   saveDB();
+   $('#ppNBook').textContent=(res.data.bookings||[]).length;
+   $('#ppNOrd').textContent=(res.data.ordersReceived||[]).length;
+   $('#ppNAvl').textContent=(res.data.availability||[]).length;
+   ppTab(__ppTab);}
+  else $('#ppBox').innerHTML='<h3><span class="dot"></span>Portal do Parceiro</h3><div class="empty"><div class="big">📡</div>'+esc((res&&res.message)||'Sem ligação ao servidor.')+'</div>';
+ }).catch(function(){$('#ppBox').innerHTML='<h3><span class="dot"></span>Portal do Parceiro</h3><div class="empty"><div class="big">📡</div>Sem ligação ao servidor. O Portal do Parceiro exige ligação ao backend VEG.</div>';});
+}
+function ppRenderEleg(){const u=currentUser();if(!u)return;const mine=db.partners.filter(p=>p.userId===u.id);
+ if(!mine.length){$('#ppNElig').textContent='—';$('#ppEleg').innerHTML='<div class="empty"><div class="big">🏢</div>Ainda não tem parceria VEG. Submeta o pedido de adesão no ecrã <b>Parceiros</b> — a decisão é da administração VEG.</div>';return;}
+ $('#ppNElig').textContent=mine.length;
+ $('#ppEleg').innerHTML=mine.map(p=>{const e=vegEligLocal(p);return '<div class="kv"><span><b>'+esc(p.name)+'</b> — '+esc(p.cat||'')+'</span><b>'+(partnerBadge(e)||'')+(p.reason&&['rejeitado','suspenso','terminado'].indexOf(e)!==-1?' <small style="color:var(--mut)">'+esc(p.reason)+'</small>':'')+'</b></div>';}).join('')+'<p style="font-size:.74rem;color:var(--mut);margin-top:8px">A elegibilidade é decidida exclusivamente pela administração VEG. Parceria formal activa = aprovada + verificada + acordo vigente.</p>';}
+function ppTab(t){__ppTab=t;const box=$('#ppBox');if(!box)return;
+ if(t==='pedidos')return ppRenderPedidos(box);
+ if(t==='encomendas')return ppRenderEncomendas(box);
+ if(t==='agenda')return ppRenderAgenda(box);
+ if(t==='trust')return ppRenderTrust(box);}
+function ppRenderPedidos(box){const head='<h3><span class="dot"></span>Pedidos recebidos (marcações)</h3>';
+ if(!__ppData){box.innerHTML=head+'<div class="empty"><div class="big">⏳</div>A carregar...</div>';return;}
+ const list=(__ppData.bookings||[]).slice().sort((a,b)=>(b.created||0)-(a.created||0));
+ if(!list.length){box.innerHTML=head+'<div class="empty"><div class="big">📅</div>Sem pedidos de marcação recebidos. Configure a sua disponibilidade para começar a receber marcações.</div>';return;}
+ const u=currentUser();
+ box.innerHTML=head+'<div class="twrap"><table><tr><th>Serviço / Cliente</th><th>Data / Hora</th><th>Estado</th><th>Decisão</th></tr>'+list.map(b=>{
+  const cli=db.users.find(x=>x.id===b.userId);
+  let act='<small style="color:var(--mut)">—</small>';
+  if(b.flow==='veg_booking'){
+   if(b.status==='aguarda_parceiro'&&b.providerOwnerId===(u&&u.id))act='<button class="btn btn-green sm" onclick="ppBookingAct(\''+b.id+'\',\'aceite\')">✔ Aceitar</button> <button class="btn btn-red sm" onclick="ppBookingAct(\''+b.id+'\',\'rejeitado\')">✖ Rejeitar</button>';
+   else if(b.status==='confirmado')act='<small style="color:var(--green)">✔ Confirmada — aguardar realização</small>';
+   else if(['rejeitado','cancelado','concluido'].indexOf(b.status)!==-1)act='<small style="color:var(--mut)">Sem acção disponível</small>';
+   else act='<small style="color:var(--mut)">Em processamento pela VEG</small>';
+  }else act='<small style="color:var(--mut)">Fluxo legado — gerir no VEG ADMIN</small>';
+  return '<tr><td>'+esc(b.serv||b.service||'—')+(b.flow==='veg_booking'?'<br><small>Fluxo VEG · disponibilidade validada</small>':'')+'</td><td>'+esc(b.date)+' '+esc(b.time)+'<br><small>'+esc(b.local||'')+'</small></td><td>'+vegBookingBadge(b.status)+'</td><td>'+act+'</td></tr>';
+ }).join('')+'</table></div>';}
+async function ppBookingAct(id,to){let reason='';
+ if(to==='rejeitado'){reason=prompt('Motivo da rejeição (obrigatório — fica no histórico e é comunicado ao cliente):')||'';if(!reason.trim()){toast('É obrigatório indicar o motivo.','er');return;}}
+ try{const res=await VEG_API.post('updateBookingStatus',{id:id,status:to,reason:reason});
+  if(res.success){const a=db.appts.find(x=>x.id===id);if(a){a.status=to;if(!Array.isArray(a.hist))a.hist=[];a.hist.push({ts:Date.now(),actor:'parceiro',action:(VEG_BOOKING_LB[to]||[,''])[1],note:reason});saveDB();}
+   ppTab('pedidos');toast('Marcação actualizada.','ok');return;}
+  toast(res.message||'Operação recusada.','er');
+ }catch(e){toast('Sem ligação ao servidor — a decisão não foi registada.','er');}}
+function ppRenderEncomendas(box){const head='<h3><span class="dot"></span>Encomendas recebidas</h3>';
+ if(!__ppData){box.innerHTML=head+'<div class="empty"><div class="big">⏳</div>A carregar...</div>';return;}
+ const list=(__ppData.ordersReceived||[]).slice().sort((a,b)=>(b.created||0)-(a.created||0));
+ if(!list.length){box.innerHTML=head+'<div class="empty"><div class="big">📦</div>Sem encomendas recebidas.</div>';return;}
+ box.innerHTML=head+'<div class="twrap"><table><tr><th>Encomenda</th><th>Itens</th><th>Total</th><th>Estado</th><th>Progressão</th></tr>'+list.map(o=>{
+  const next=VEG_ORDER_NEXT[o.status]||[];
+  return '<tr><td><b>'+esc(o.code||o.id)+'</b><br><small>'+dstr(o.created)+'</small></td><td>'+(o.items||[]).map(i=>esc(i.qty+'× '+(i.name||i.productId))).join('<br>')+'</td><td>'+fmtKz(o.total)+'</td><td><span class="bdg '+(o.status==='Concluído'?'b-g':o.status==='Cancelado'||o.status==='Reembolsado'?'b-r':'b-p')+'">'+esc(o.status)+'</span>'+(o.statusReason?'<br><small style="color:var(--mut)">'+esc(o.statusReason)+'</small>':'')+'</td><td>'+(next.length?'<select onchange="if(this.value)ppOrderAct(\''+o.id+'\',this.value)"><option value="">Avançar...</option>'+next.map(s=>'<option>'+esc(s)+'</option>').join('')+'</select>':'<small style="color:var(--mut)">—</small>')+'</td></tr>';
+ }).join('')+'</table></div>';}
+async function ppOrderAct(id,to){let reason='';
+ if(to==='Cancelado'||to==='Reembolsado'){reason=prompt('Motivo (obrigatório):')||'';if(!reason.trim()){toast('É obrigatório indicar o motivo.','er');return;}}
+ try{const res=await VEG_API.post('updateOrderStatus',{id:id,status:to,reason:reason});
+  if(res.success){const o=db.orders.find(x=>x.id===id);if(o){o.status=to;if(reason)o.statusReason=reason;saveDB();}
+   if(__ppData){const oo=(__ppData.ordersReceived||[]).find(x=>x.id===id);if(oo)oo.status=to;}
+   ppTab('encomendas');toast('Encomenda actualizada: '+to,'ok');return;}
+  toast(res.message||'Operação recusada.','er');
+ }catch(e){toast('Sem ligação ao servidor — a alteração não foi registada.','er');}}
+/* ---------- Editor de disponibilidade ---------- */
+function ppMyProviders(){const u=currentUser();const out=[];
+ (db.partners||[]).filter(p=>p.userId===u.id).forEach(p=>out.push({type:'partner',id:p.id,name:p.name}));
+ (db.professionals||[]).filter(p=>p.userId===u.id).forEach(p=>out.push({type:'professional',id:p.id,name:(p.specialty||'Profissional')+' (profissional)'}));
+ (db.businesses||[]).filter(b=>b.userId===u.id).forEach(b=>out.push({type:'business',id:b.id,name:b.name+' (empresa)'}));
+ return out;}
+function ppRenderAgenda(box){const head='<h3><span class="dot"></span>Disponibilidade real (agenda)</h3>';
+ const provs=ppMyProviders();
+ if(!provs.length){box.innerHTML=head+'<div class="empty"><div class="big">🗓️</div>Sem perfil de prestador nesta conta. Crie o perfil profissional ou submeta o pedido de adesão de parceiro.</div>';return;}
+ const sel=$('#ppProv');
+ box.innerHTML=head+'<div class="fld"><label>Prestador</label><select id="ppProv" onchange="ppRenderAgenda($(\'#ppBox\'))">'+provs.map(p=>'<option value="'+p.type+'|'+p.id+'"'+(sel&&sel.value===p.type+'|'+p.id?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select></div><div id="ppAgBody"></div>';
+ ppAgBodyRender();}
+function ppAgBodyRender(){const body=$('#ppAgBody');if(!body)return;
+ const key=($('#ppProv')&&$('#ppProv').value)||'';const i=key.indexOf('|');
+ if(i<0){body.innerHTML='';return;}
+ const pType=key.slice(0,i),pId=key.slice(i+1);
+ const av=(db.availability||[]).filter(a=>a.providerType===pType&&a.providerId===pId)[0]||null;
+ const weekly=av&&av.weekly?av.weekly:[];
+ const DAYS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+ let whtml='';
+ for(let d=0;d<7;d++){const w=weekly.find(x=>+x.day===d)||{on:false,start:'09:00',end:'17:00'};
+  whtml+='<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><label style="min-width:90px;font-size:.82rem"><input type="checkbox" id="ppD'+d+'" '+(w.on?'checked':'')+' onchange="ppAgDirty()"> '+DAYS[d]+'</label><input type="time" id="ppS'+d+'" value="'+w.start+'" onchange="ppAgDirty()" style="padding:6px 8px;border:1px solid #D4DCE8;border-radius:8px"> até <input type="time" id="ppE'+d+'" value="'+w.end+'" onchange="ppAgDirty()" style="padding:6px 8px;border:1px solid #D4DCE8;border-radius:8px"></div>';}
+ const blocked=av&&av.blockedDates?av.blockedDates:[];
+ body.innerHTML='<div class="fld"><label>Dias de atendimento e horários</label>'+whtml+'</div>'+
+ '<div class="frow3"><div class="fld"><label>Duração do serviço (min)</label><input id="ppDur" type="number" min="15" max="480" step="5" value="'+(av?av.durationMin||60:60)+'" onchange="ppAgDirty()"></div>'+
+ '<div class="fld"><label>Intervalo entre marcações (min)</label><input id="ppGap" type="number" min="0" max="120" step="5" value="'+(av?av.intervalMin||0:0)+'" onchange="ppAgDirty()"></div>'+
+ '<div class="fld"><label>Bloquear data</label><input id="ppBlk" type="date" min="'+new Date().toISOString().slice(0,10)+'"></div></div>'+
+ '<div id="ppBlks">'+(blocked.length?blocked.map(d=>'<span class="bdg b-r" style="margin-right:6px">📅 '+esc(d)+' <a href="#" onclick="ppBlkRemove(\''+d+'\');return false" title="Remover bloqueio">✖</a></span>').join(''):'<small style="color:var(--mut)">Sem datas bloqueadas.</small>')+'</div>'+
+ '<div style="display:flex;gap:10px;margin-top:12px;align-items:center"><button class="btn btn-gold sm" onclick="ppBlkAdd()">➕ Bloquear data</button><button class="btn btn-blue" id="ppSaveBtn" onclick="ppSaveAvail()">💾 Guardar disponibilidade</button><small id="ppAgMsg" style="color:var(--mut)"></small></div>'+
+ '<p style="font-size:.74rem;color:var(--mut);margin-top:10px">A disponibilidade é validada no servidor: os clientes só conseguem marcar slots livres confirmados pelo backend — conflitos de horário são impossíveis por construção.</p>';
+ window.__ppBlocked=blocked.slice();}
+function ppAgDirty(){const b=$('#ppSaveBtn');if(b){b.className='btn btn-gold';b.textContent='💾 Guardar disponibilidade';}}
+function ppBlkAdd(){const inp=$('#ppBlk');if(!inp||!inp.value)return;
+ if(!window.__ppBlocked)window.__ppBlocked=[];
+ if(window.__ppBlocked.indexOf(inp.value)!==-1){toast('Data já bloqueada.','er');return;}
+ window.__ppBlocked.push(inp.value);ppAgDirty();
+ $('#ppBlks').innerHTML=window.__ppBlocked.map(d=>'<span class="bdg b-r" style="margin-right:6px">📅 '+esc(d)+' <a href="#" onclick="ppBlkRemove(\''+d+'\');return false" title="Remover bloqueio">✖</a></span>').join('');
+ inp.value='';}
+function ppBlkRemove(d){window.__ppBlocked=(window.__ppBlocked||[]).filter(x=>x!==d);ppAgDirty();
+ $('#ppBlks').innerHTML=window.__ppBlocked.length?window.__ppBlocked.map(x=>'<span class="bdg b-r" style="margin-right:6px">📅 '+esc(x)+' <a href="#" onclick="ppBlkRemove(\''+x+'\');return false" title="Remover bloqueio">✖</a></span>').join(''):'<small style="color:var(--mut)">Sem datas bloqueadas.</small>';}
+async function ppSaveAvail(){const key=($('#ppProv')&&$('#ppProv').value)||'';const i=key.indexOf('|');
+ if(i<0)return;const pType=key.slice(0,i),pId=key.slice(i+1);
+ const weekly=[];for(let d=0;d<7;d++)weekly.push({day:d,on:$('#ppD'+d).checked,start:$('#ppS'+d).value,end:$('#ppE'+d).value});
+ const payload={availability:{providerType:pType,providerId:pId,weekly:weekly,durationMin:+$('#ppDur').value||60,intervalMin:+$('#ppGap').value||0,blockedDates:window.__ppBlocked||[]}};
+ try{const res=await VEG_API.post('saveAvailability',payload);
+  if(res.success){const idx=(db.availability||[]).findIndex(a=>a.providerType===pType&&a.providerId===pId);
+   if(idx>-1)db.availability[idx]=Object.assign({},db.availability[idx],res.data);else db.availability.push(res.data);saveDB();
+   toast('Disponibilidade guardada no servidor.','ok');
+   const msg=$('#ppAgMsg');if(msg)msg.textContent='✔ Guardado em '+new Date().toLocaleTimeString('pt-PT');
+   const b=$('#ppSaveBtn');if(b){b.className='btn btn-blue';b.textContent='💾 Guardado ✔';}
+   VEG_SYNC.pull({silent:true});return;}
+  toast(res.message||'Não foi possível guardar.','er');
+ }catch(e){toast('Sem ligação — a agenda não foi guardada no servidor.','er');}}
+function ppRenderTrust(box){const head='<h3><span class="dot"></span>Indicadores VEG TRUST</h3>';
+ const provs=ppMyProviders();
+ if(!provs.length){box.innerHTML=head+'<div class="empty"><div class="big">🛡️</div>Sem perfil de prestador nesta conta.</div>';return;}
+ box.innerHTML=head+'<div class="fld"><label>Prestador</label><select id="ppTrustSel" onchange="ppTrustLoad()">'+provs.map(p=>'<option value="'+p.type+'|'+p.id+'">'+esc(p.name)+'</option>').join('')+'</select></div><div id="ppTrustBody" style="margin-top:12px"><div class="empty"><div class="big">⏳</div>A carregar...</div></div>';
+ ppTrustLoad();}
+function ppTrustLoad(){const key=($('#ppTrustSel')&&$('#ppTrustSel').value)||'';const i=key.indexOf('|');const body=$('#ppTrustBody');
+ if(i<0||!body)return;body.innerHTML='<div class="empty"><div class="big">⏳</div>A calcular no servidor...</div>';
+ const pType=key.slice(0,i),pId=key.slice(i+1);
+ VEG_API.post('vegTrust',{providerType:pType,providerId:pId}).then(function(res){
+  if(!res||!res.success){body.innerHTML='<div class="empty"><div class="big">⚠️</div>'+esc((res&&res.message)||'Sem ligação ao servidor.')+'</div>';return;}
+  const t=res.data;
+  body.innerHTML='<div style="display:flex;flex-direction:column;gap:8px">'+t.indicators.map(x=>'<div class="kv"><span>'+(x.ok?'✅ ':'⚪ ')+'<b>'+esc(vegTrustLabel(x.key))+'</b><br><small style="color:var(--mut)">'+esc(x.criterion)+'</small></span><b>'+esc(x.value)+'</b></div>').join('')+'</div><p style="font-size:.72rem;color:#9AA7BC;margin-top:12px">'+esc(t.disclaimer)+'</p>';
+ }).catch(function(){body.innerHTML='<div class="empty"><div class="big">📡</div>Sem ligação ao servidor.</div>';});}
+const VEG_TRUST_LB={identidadeVerificada:'Identidade verificada',documentosAnalisados:'Documentos analisados',perfilEmpresarialValidado:'Perfil validado',parceriaFormalActiva:'Parceria formal activa',servicosConcluidos:'Serviços concluídos',avaliacoesRecebidas:'Avaliações recebidas',historicoActividade:'Histórico de actividade',ocorrencias:'Ocorrências'};
+function vegTrustLabel(k){return VEG_TRUST_LB[k]||k;}
+function vegTrustModal(pt,pid){modalT('🛡️ VEG TRUST','<div class="empty"><div class="big">⏳</div>A calcular indicadores no servidor...</div>');
+ VEG_API.post('vegTrust',{providerType:pt,providerId:pid}).then(function(res){
+  if(!res||!res.success){modalT('🛡️ VEG TRUST','<div class="empty"><div class="big">⚠️</div>'+esc((res&&res.message)||'Sem ligação ao servidor.')+'</div>');return;}
+  const t=res.data;
+  modalT('🛡️ VEG TRUST — '+esc(t.name),
+   '<div style="display:flex;flex-direction:column;gap:8px">'+t.indicators.map(function(i){return '<div class="kv"><span>'+(i.ok?'✅ ':'⚪ ')+'<b>'+esc(vegTrustLabel(i.key))+'</b><br><small style="color:var(--mut)">'+esc(i.criterion)+'</small></span><b>'+esc(i.value)+'</b></div>';}).join('')+'</div>'+
+   '<p style="font-size:.72rem;color:#9AA7BC;margin-top:12px">'+esc(t.disclaimer)+'</p>');
+ }).catch(function(){modalT('🛡️ VEG TRUST','<div class="empty"><div class="big">📡</div>Sem ligação ao servidor.</div>');});}
+
+/* ---------- VEG ADMIN: elegibilidade, encomendas, regras comerciais ---------- */
+async function vegEligAction(id,to){if(!isAdmin()){toast('⛔ Só o VEG ADMIN decide a elegibilidade.','er');logAction('Tentativa de decisão de elegibilidade bloqueada',id);return;}
+ let reason='';
+ if(['rejeitado','suspenso','terminado'].indexOf(to)!==-1){reason=prompt('Motivo administrativo (obrigatório — fica registado na auditoria e é comunicado ao candidato):')||'';if(!reason.trim()){toast('É obrigatório registar o motivo.','er');return;}}
+ try{const res=await VEG_API.post('updatePartnerEligibility',{id:id,eligibility:to,reason:reason});
+  if(res.success&&res.data){const p=db.partners.find(x=>x.id===id);
+   if(p){p.eligibility=res.data.eligibility;p.status=res.data.status;if(['aprovado','ativo'].indexOf(to)!==-1){p.verified=true;}if(reason)p.reason=reason;if(to==='ativo')p.verifiedAt=new Date().toISOString();saveDB();}
+   adminTab('parceiros');renderParceiros();toast('Elegibilidade actualizada: '+(PARTNER_STATUS[to]||to),'ok');return;}
+  if(res.error&&res.error.code!=='NETWORK_ERROR'&&res.error.code!=='NOT_CONFIGURED'){toast(res.message,'er');return;}
+ }catch(e){}
+ toast('Sem ligação ao servidor — a decisão NÃO foi registada. Tente novamente.','er');}
+function adOrders(box,head){const list=(db.orders||[]).slice().sort((a,b)=>(b.created||0)-(a.created||0));
+ const rows=list.map(o=>{const next=VEG_ORDER_NEXT[o.status]||[];
+  return '<tr><td><b>'+esc(o.code||o.id)+'</b><br><small>'+dstr(o.created)+'</small></td><td>'+(o.items||[]).map(i=>esc((i.qty||1)+'× '+(i.name||i.productId))).join('<br>')+'</td><td>'+fmtKz(o.total)+'</td><td>'+esc((db.users.find(u=>u.id===o.userId)||{}).name||o.userId||'—')+'</td><td><span class="bdg '+(o.status==='Concluído'?'b-g':['Cancelado','Reembolsado'].indexOf(o.status)!==-1?'b-r':'b-p')+'">'+esc(o.status)+'</span>'+(o.statusReason?'<br><small style="color:var(--mut)">'+esc(o.statusReason)+'</small>':'')+'</td><td>'+(next.length?'<select onchange="if(this.value)ppOrderAct(\''+o.id+'\',this.value)"><option value="">Avançar...</option>'+next.map(s=>'<option>'+esc(s)+'</option>').join('')+'</select>':'<small style="color:var(--mut)">—</small>')+'</td></tr>';}).join('');
+ box.innerHTML=head('📦 Encomendas — progressão de estados')+'<div class="notice" style="margin-bottom:12px">Sequência: <b>Recebido → Em validação → Aceite → Em preparação → Enviado / Disponível para levantamento → Concluído</b> · Cancelado · Reembolsado. Cada transição é validada e auditada no servidor.</div><div class="twrap"><table><tr><th>Encomenda</th><th>Itens</th><th>Total</th><th>Cliente</th><th>Estado</th><th>Progressão</th></tr>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--mut)">Sem encomendas.</td></tr>')+'</table></div>';}
+function adRules(box,head){box.innerHTML=head('📐 Regras Comerciais')+'<div class="empty"><div class="big">⏳</div>A carregar as regras do servidor...</div>';
+ VEG_API.post('getCommercialRules',{}).then(function(res){
+  if(!res||!res.success){box.innerHTML=head('📐 Regras Comerciais')+'<div class="empty"><div class="big">📡</div>'+esc((res&&res.message)||'Sem ligação ao servidor. As regras só são geridas online pelo VEG ADMIN.')+'</div>';return;}
+  const rules=res.data||[];
+  if(!rules.length){box.innerHTML=head('📐 Regras Comerciais')+'<div class="empty"><div class="big">📐</div>Sem regras definidas. Execute setupBackend() no editor do Apps Script para semear a regra legada da comissão.</div>';return;}
+  const rows=rules.map(r=>{const hist=Array.isArray(r.history)?r.history:[];
+   return '<tr><td><b>'+esc(r.key)+'</b><br><small>'+esc(r.finalidade||'')+'</small></td>'+
+   '<td><input id="rl_'+r.key+'_valor" type="number" step="0.01" min="0" value="'+esc(r.valor)+'" style="width:100px;padding:6px 8px;border:1px solid #D4DCE8;border-radius:8px"></td>'+
+   '<td><input id="rl_'+r.key+'_formula" value="'+esc(r.formula||'')+'" style="width:150px;padding:6px 8px;border:1px solid #D4DCE8;border-radius:8px"></td>'+
+   '<td><select id="rl_'+r.key+'_status">'+['vigente','pendente','revogada'].map(s=>'<option value="'+s+'"'+(r.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></td>'+
+   '<td><small>'+esc(r.updatedBy||'—')+'<br>'+(r.updatedAt?dstr(Date.parse(r.updatedAt)):'')+'</small></td>'+
+   '<td><button class="btn btn-gold sm" onclick="adSaveRule(\''+r.key+'\')">💾 Guardar</button>'+(hist.length?' <button class="btn btn-grey sm" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">🧾 Histórico ('+hist.length+')</button><div style="display:none;margin-top:6px;font-size:.74rem;color:var(--mut)">'+hist.slice().reverse().map(h=>'• valor '+esc(h.valor)+' · '+esc(h.status||'')+' · por '+esc((h.updatedBy||'').slice(0,8))+' em '+esc(String(h.updatedAt||'').slice(0,10))).join('<br>')+'</div>':'')+'</td></tr>';}).join('');
+  box.innerHTML=head('📐 Regras Comerciais (centralizadas, auditáveis)')+'<p style="font-size:.78rem;color:var(--mut);margin-bottom:12px">Valores comerciais configuráveis pelo VEG ADMIN — cada alteração fica com histórico e auditoria. A comissão usada nas liquidações é lida da regra <b>commission_veg</b> (valor legado da Fase 5: 15%).</p><div class="twrap"><table><tr><th>Regra</th><th>Valor</th><th>Fórmula</th><th>Estado</th><th>Última alteração</th><th></th></tr>'+rows+'</table></div>';
+ }).catch(function(){box.innerHTML=head('📐 Regras Comerciais')+'<div class="empty"><div class="big">📡</div>Sem ligação ao servidor.</div>';});}
+async function adSaveRule(key){const valor=$('#rl_'+key+'_valor').value,formula=$('#rl_'+key+'_formula').value,status=$('#rl_'+key+'_status').value;
+ try{const res=await VEG_API.post('saveCommercialRule',{rule:{key:key,valor:valor,formula:formula,status:status}});
+  if(res.success){toast('Regra comercial guardada com histórico.','ok');adminTab('regras');return;}
+  toast(res.message||'Não foi possível guardar.','er');
+ }catch(e){toast('Sem ligação — a regra não foi guardada.','er');}}
+
 db.users.forEach(function(u){ensureWallet(u);});saveDB();
 window.addEventListener('load',()=>{
  if(db.session&&currentUser()){enterApp();}else{$('#auth').classList.remove('hidden');
