@@ -1289,7 +1289,7 @@ function fileToData(file,cb,max){max=max||5*1024*1024;if(!file)return cb('');if(
 /* ================= Integrações externas (graciosas) ================= */
 /* ================= VEG API CLIENT ================= */
 const VEG_CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbx_0pHBx6Z-PgXtSUlx5wdDSm91EnB78ZutNn_usmtpLa787wHHfSgBTHrgaS7WQ5pB/exec",   // URL do Web App Code.gs (deployment /exec) - tambem configuravel no ecra Admin (campo API)
+  API_URL: "https://script.google.com/macros/s/AKfycbwa5qPq2frqTpOaIwIZnvpe6eFVdHWrvITkhzvW18pwtREPJ5dDVjuD66ukTfiso5r8Qw/exec",   // URL do Web App Code.gs (deployment /exec) - tambem configuravel no ecra Admin (campo API)
   TIMEOUT_MS: 30000,
   APP_VERSION: 1
 };
@@ -3402,7 +3402,7 @@ db.users.forEach(function(u){ensureWallet(u);});saveDB();
 window.addEventListener('load',()=>{
  if(db.session&&currentUser()){enterApp();}else{$('#auth').classList.remove('hidden');
   const hm=location.hash.match(/ref=([A-Za-z0-9-]+)/);if(hm){const rf=hm[1].toUpperCase();const rfEl=document.getElementById('rgRef');if(rfEl)rfEl.value=rf;authTab('reg');toast('🎁 Convite VEG INDICA detectado — código '+rf+'. Complete a inscrição para entrar na rede!','ok');}}
- var BAD_URLS=['AKfycbwfidfy-MdbqddqPyxASokcgJwIglS3YcaVBlcqrz3QXUQllj6wx1UfJAoFozvdqTlw','AKfycbyjOj_wzZldbtAnTvC1DuUmUzwlWMjLkTMQA4b0VWtgsW7Dl-m7TnKjukegGsggUp2hug'];if(BAD_URLS.some(function(b){return (db.cfg.apiUrl||'').indexOf(b)!==-1;})){db.cfg.apiUrl='';db.cfg.gsUrl='';saveDB();}$('#cfgGS').value=db.cfg.gsUrl||VEG_CONFIG.API_URL;$('#cfgMail').value=db.cfg.email;$('#cfgApi').value=db.cfg.apiUrl||VEG_CONFIG.API_URL;VEG_CONFIG.API_URL = db.cfg.apiUrl || VEG_CONFIG.API_URL;
+ var BAD_URLS=['AKfycbx_0pHBx6Z-PgXtSUlx5wdDSm91EnB78ZutNn_usmtpLa787wHHfSgBTHrgaS7WQ5pB','AKfycbwfidfy-MdbqddqPyxASokcgJwIglS3YcaVBlcqrz3QXUQllj6wx1UfJAoFozvdqTlw','AKfycbyjOj_wzZldbtAnTvC1DuUmUzwlWMjLkTMQA4b0VWtgsW7Dl-m7TnKjukegGsggUp2hug'];if(BAD_URLS.some(function(b){return (db.cfg.apiUrl||'').indexOf(b)!==-1;})){db.cfg.apiUrl='';db.cfg.gsUrl='';saveDB();}$('#cfgGS').value=db.cfg.gsUrl||VEG_CONFIG.API_URL;$('#cfgMail').value=db.cfg.email;$('#cfgApi').value=db.cfg.apiUrl||VEG_CONFIG.API_URL;VEG_CONFIG.API_URL = db.cfg.apiUrl || VEG_CONFIG.API_URL;
 });
 </script>
 </body>
