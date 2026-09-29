@@ -430,7 +430,7 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
       <div class="frow3">
         <div class="fld"><label>Província *</label><select id="sqProv"></select></div>
         <div class="fld"><label>Contacto preferencial *</label><input id="sqTel" required placeholder="+244 9XX XXX XXX"></div>
-        <div class="fld"><label>Orçamento estimado (Kz)</label><input id="sqOrc" type="number" min="0" placeholder="Opcional"></div>
+        
       </div>
       <div class="fld"><label>Descreva a sua necessidade *</label><textarea id="sqDesc" rows="4" required placeholder="Explique o problema, o objectivo, prazos e qualquer detalhe relevante..."></textarea></div>
       <button class="btn btn-gold" type="submit">📨 Enviar Solicitação → CRM VEG</button>
@@ -634,6 +634,10 @@ body.is-admin .admin-only{display:flex} body:not(.is-admin) #cfgDataCard{display
         <div class="fld"><label>Validade</label><input id="oppValidade" type="date"></div>
       </div>
       <div class="fld"><label>Descrição *</label><textarea id="oppDesc" rows="3" required placeholder="Quantidades, prazos, localização de entrega, requisitos..."></textarea></div>
+      <div class="frow">
+        <div class="fld"><label>Imagem ilustrativa</label><input id="oppFoto" type="file" accept="image/*"><small style="color:var(--mut)">Aumenta a credibilidade comercial da proposta (comprimida automaticamente).</small></div>
+        <div class="fld"><label>Vídeo (link YouTube/Drive)</label><input id="oppVideo" type="url" placeholder="https://..."></div>
+      </div>
       <button class="btn btn-gold" type="submit">📨 Submeter para moderação VEG</button>
     </form>
   </div>
@@ -1289,7 +1293,7 @@ function fileToData(file,cb,max){max=max||5*1024*1024;if(!file)return cb('');if(
 /* ================= Integrações externas (graciosas) ================= */
 /* ================= VEG API CLIENT ================= */
 const VEG_CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbwa5qPq2frqTpOaIwIZnvpe6eFVdHWrvITkhzvW18pwtREPJ5dDVjuD66ukTfiso5r8Qw/exec",   // URL do Web App Code.gs (deployment /exec) - tambem configuravel no ecra Admin (campo API)
+  API_URL: "https://script.google.com/macros/s/AKfycbx_0pHBx6Z-PgXtSUlx5wdDSm91EnB78ZutNn_usmtpLa787wHHfSgBTHrgaS7WQ5pB/exec",   // URL do Web App Code.gs (deployment /exec) - tambem configuravel no ecra Admin (campo API)
   TIMEOUT_MS: 30000,
   APP_VERSION: 1
 };
@@ -1503,7 +1507,7 @@ const VEG_SYNC = {
     else{
       this.setState('error');
       if(res.error&&res.error.code!=='NOT_CONFIGURED')
-        this._warnOnce('Não foi possível sincronizar os dados neste momento. Verifique a sua ligação e tente novamente.');
+        this._warnOnce('Falha de sincronização ['+((res.error&&res.error.code)||'?')+'] '+(res.message||'')+'. Se persistir, contacte o suporte VEG com este código.');
     }
     return res;
   },
@@ -2147,7 +2151,7 @@ function doRegister(e){e.preventDefault();if($('#rgSenha').value!==$('#rgSenha2'
  const u={id:uid(),name:$('#rgNome').value.trim(),email:email,phone:$('#rgTel').value.trim(),pass:$('#rgSenha').value,role:'user',active:true,created:Date.now(),interests:'',profession:'',province:'',idade:'',vegno:String(db.counters.vegNum++).padStart(6,'0')};
  while(db.users.some(x=>x.vegno===u.vegno)){u.vegno=String(db.counters.vegNum++).padStart(6,'0');}
  vegHash(u.pass).then(function(h){u.passHash=h;
- fileToData($('#rgFoto').files[0],d=>{if(d)u.photo=d;db.users.push(u);db.session={uid:u.id};logAction('Registo de novo utilizador',u.email);const refCode=($('#rgRef')?$('#rgRef').value:'').trim().toUpperCase();if(refCode){const inv=db.users.find(x=>indicaCode(x)===refCode);if(inv&&inv.id!==u.id){db.indications.push({id:uid(),inviterId:inv.id,inviteeName:u.name,inviteeEmail:u.email,at:Date.now()});notify(inv.id,'🎉 '+u.name+' inscreveu-se na VEG APP com o seu código VEG INDICA!');logAction('Inscrição via VEG INDICA',refCode);}}ensureWallet(u);pushData({tipo:'novo_utilizador',...u,pass:undefined});saveDB();vegRegisterRemote(u);enterApp();toast('Conta criada com sucesso!','ok');});});}
+ fileToData($('#rgFoto').files[0],d=>{if(d)u.photo=d;db.users.push(u);db.session={uid:u.id};logAction('Registo de novo utilizador',u.email);const refCode=($('#rgRef')?$('#rgRef').value:'').trim().toUpperCase();if(refCode){const inv=db.users.find(x=>indicaCode(x)===refCode);if(inv&&inv.id!==u.id){db.indications.push({id:uid(),inviterId:inv.id,inviteeName:u.name,inviteeEmail:u.email,at:Date.now()});db.notifs.unshift({id:uid(),userId:inv.id,text:'🎉 '+u.name+' inscreveu-se na VEG APP com o seu código VEG INDICA! 💬 Toque aqui para o parabenizar e orientar por mensagem.',at:Date.now(),read:false,linkUid:u.id});logAction('Inscrição via VEG INDICA',refCode);}}ensureWallet(u);pushData({tipo:'novo_utilizador',...u,pass:undefined});saveDB();vegRegisterRemote(u);enterApp();toast('Conta criada com sucesso!','ok');});});}
 function startLogin(u,sess){window._vegSess=sess||null;if(u.tfa){const code=String(Math.floor(100000+Math.random()*900000));db.otp={uid:u.id,code,exp:Date.now()+5*60*1000};saveDB();otpModal(u);}else finishLogin(u);}
 function finishLogin(u){db.session={uid:u.id};vegAttachSession(window._vegSess);window._vegSess=null;logAction('Login'+(u.tfa?' (2FA)':''),u.email);saveDB();try{VEG_SYNC.pull();}catch(e){}enterApp();toast('Bem-vindo(a), '+u.name.split(' ')[0]+'!','ok');}
 function otpModal(u){modalT('🔐 Verificação em dois passos','<p style="font-size:.83rem;color:var(--mut);margin-bottom:10px;line-height:1.6">Foi gerado um código de 6 dígitos para <b>'+esc(u.email)+'</b>. <span class="bdg b-p">Válido por 5 minutos · uso único</span><br><small>Em produção, o código é enviado por SMS/WhatsApp (API) — <b>DEPENDÊNCIA EXTERNA</b>. Nesta versão de demonstração, o código é: <b style="color:var(--gold2);letter-spacing:2px">'+db.otp.code+'</b></small></p><div class="fld"><label>Código de verificação</label><input id="otpIn" maxlength="6" inputmode="numeric" placeholder="••••••" onkeydown="if(event.key===\'Enter\')verifyOtp()"></div><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn btn-gold sm" onclick="verifyOtp()">✔ Verificar e entrar</button><button class="btn btn-grey sm" onclick="resendOtp()">🔁 Novo código</button><button class="btn btn-red sm" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove());">Cancelar</button></div><p style="font-size:.7rem;color:#9AA7BC;margin-top:10px">As tentativas falhadas ficam registadas nos logs de segurança.</p>');
@@ -2269,8 +2273,9 @@ function renderSolucoes(){$('#eixosGrid').innerHTML=EIXOS.map(e=>'<div class="ei
  $('#solTable').innerHTML='<tr><th>Código</th><th>Eixo / Serviço</th><th>Data</th><th>Estado</th><th></th></tr>'+(sols.length?sols.map(x=>'<tr><td><b>'+esc(x.code)+'</b></td><td>'+esc(x.eixo)+(x.serv?'<br><small style="color:var(--mut)">'+esc(x.serv)+'</small>':'')+'</td><td>'+dstr(x.created)+'</td><td><span class="bdg '+(x.status==='Concluído'?'b-g':x.status==='Cancelado'?'b-r':'b-p')+'">'+esc(x.status)+'</span></td><td>'+(x.status==='Concluído'?'<span class="stars" onclick="rateSol(\''+x.id+'\')">★★★★★</span>':'')+'</td></tr>').join(''):'<tr><td colspan="5" style="text-align:center;color:var(--mut)">Sem solicitações.</td></tr>');}
 function showEixo(n){const e=EIXOS[n-1];modalT('Eixo '+n+' — '+e.t,'<p style="font-size:.86rem;color:var(--mut);line-height:1.8;margin-bottom:14px"><b>Actividades:</b><br>'+esc(e.a)+'</p><button class="btn btn-gold" onclick="this.closest(\'.mback\').remove();prefillSolic('+n+')">📨 Solicitar solução neste eixo</button>');}
 function submitSolic(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();const code='SOL-'+String(db.counters.sol++).padStart(5,'0');
- db.sols.push({id:uid(),code,userId:u.id,eixo:$('#sqEixo').value,serv:$('#sqServ').value.trim(),province:$('#sqProv').value,phone:$('#sqTel').value.trim(),budget:+$('#sqOrc').value||0,desc:$('#sqDesc').value.trim(),status:'Recebido',created:Date.now()});
- notify(u.id,'📨 Solicitação '+code+' registada e encaminhada à equipa VEG.');
+ db.sols.push({id:uid(),code,userId:u.id,eixo:$('#sqEixo').value,serv:$('#sqServ').value.trim(),province:$('#sqProv').value,phone:$('#sqTel').value.trim(),desc:$('#sqDesc').value.trim(),status:'Recebido',created:Date.now()});
+ notify(u.id,'✅ A sua solicitação foi recebida com sucesso pela equipa VEG. Em conformidade com os critérios comerciais vigentes, os nossos técnicos irão elaborar o orçamento adequado, com base na rede de parceiros credenciada, e entrarão em contacto consigo através do WhatsApp ou do e-mail indicado. A confirmação formal ficará igualmente disponível no seu Escritório Virtual. A VEG agradece a sua confiança.');
+ db.users.filter(x=>x.role==='admin'||x.role==='superadmin').forEach(a=>db.notifs.unshift({id:uid(),userId:a.id,text:'📋 Nova solicitação Soluções VEG: '+($('#sqEixo')?$('#sqEixo').value:'—')+' ('+($('#sqProv')&&$('#sqProv').value||'—')+') — '+u.name+'. Elabore o orçamento e responda via WhatsApp/e-mail.',at:Date.now(),read:false}));
  logAction('Solicitação VEG criada',code);pushData({tipo:'solicitacao',codigo:code,eixo:$('#sqEixo').value,desc:$('#sqDesc').value,contacto:$('#sqTel').value});
  saveDB();e.target.reset();renderSolucoes();renderInicio();toast('Solicitação '+code+' enviada! Acompanhe no histórico.','ok');}
 function rateSol(id){modalT('Avaliar serviço','<p style="font-size:.85rem;margin-bottom:10px">Classifique a qualidade, atendimento, pontualidade e experiência.</p><div class="stars" style="font-size:2rem" id="rateStars">☆☆☆☆☆</div><div class="fld" style="margin-top:12px"><label>Comentário</label><textarea id="rateTxt" rows="3" placeholder="Partilhe a sua experiência..."></textarea></div><button class="btn btn-gold sm" onclick="saveRating(\''+id+'\')">Enviar avaliação</button>');
@@ -2799,7 +2804,7 @@ function setProVerif(id,st){const pr=db.professionals.find(x=>x.id===id);if(!pr)
  try{VEG_API.post('updateProfessionalStatus',{id:id,status:st,reason:reason});}catch(e){}
  if(pr.userId)notify(pr.userId,'🧰 Verificação do seu perfil profissional: '+(st==='verificado'?'APROVADA ✔ — está verificado pela VEG.':st==='em_analise'?'em análise pela equipa VEG.':'REJEITADA.'+(reason?' Motivo: '+reason:'')));
  logAction('Verificação profissional → '+st,pr.specialty||id);saveDB();adminTab('verificacoes');toast('Estado de verificação actualizado.','ok');}
-function adminTab(t){const box=$('#adminBox');const su=role()==='superadmin';
+function adminTab(t){const _bx=$('#adminBox');if(_bx)setTimeout(function(){_bx.scrollIntoView({behavior:'smooth',block:'start'});},60);const box=$('#adminBox');const su=role()==='superadmin';
  const head=x=>'<h3><span class="dot"></span>'+x+'</h3>';
  if(t==='saldo'){box.innerHTML=adRenderSaldo();adShowUser();}
  if(t==='pedidos'){const rows=db.sols.map(s=>{const u=db.users.find(x=>x.id===s.userId);return '<tr><td><b>'+esc(s.code)+'</b></td><td>'+esc(s.eixo)+(s.serv?'<br><small>'+esc(s.serv)+'</small>':'')+'</td><td>'+esc(u?u.name:'—')+'<br><small>'+esc(s.phone)+'</small></td><td>'+dstr(s.created)+'</td><td><select onchange="setSolStatus(\''+s.id+'\',this.value)">'+SOL_STATES.map(x=>'<option '+(x===s.status?'selected':'')+'>'+x+'</option>').join('')+'</select></td></tr>';}).join('');
@@ -3080,7 +3085,7 @@ function vegResultCard(r){
  else if(r.kind==='empresa'&&r.whatsapp)btn='<button class="btn btn-green sm" onclick="window.open(\'https://wa.me/'+esc(String(r.whatsapp).replace(/\D/g,''))+'\',\'_blank\')">💬 Contactar</button>';
  else if(r.kind==='produto'&&db.products.some(p=>p.id===r.id&& (p.status||'ativo')==='ativo'&&!(p.stock!=null&&p.stock!==''&&+p.stock<=0)))btn='<button class="btn btn-gold sm" onclick="addCart(\''+r.id+'\')">+ Carrinho</button><button class="btn btn-green sm" onclick="askProduct(\''+r.id+'\')">💬 Perguntar</button>';
  else if(r.kind==='oportunidade')btn='<button class="btn btn-gold sm" onclick="manifestInterestOpp(\''+r.id+'\')">🙋 Manifestar interesse</button>';
- return '<div class="mkcard"><div class="img">'+(lbl[r.kind]||'🔍').split(' ')[0]+'</div><div class="bd"><span class="bdg b-p" style="font-size:.62rem">'+esc(lbl[r.kind]||r.kind)+'</span>'+v+'<br><b>'+esc(r.name)+'</b>'+(r.price!=null&&r.kind==='produto'?'<div class="pr">'+fmtKz(r.price)+'</div>':'')+'<small>'+esc(r.desc||'')+'</small>'+extra+'</div><div class="ft">'+btn+'</div></div>';
+ return '<div class="mkcard"><div class="img">'+((r.kind==='oportunidade'&&r.media)?'<img src="'+r.media+'">':(r.kind==='oportunidade'&&r.video)?'<a href="'+esc(r.video)+'" target="_blank" style="color:var(--goldL);font-size:.85rem">▶️ Ver vídeo</a>':(lbl[r.kind]||'🔍').split(' ')[0])+'</div><div class="bd"><span class="bdg b-p" style="font-size:.62rem">'+esc(lbl[r.kind]||r.kind)+'</span>'+v+'<br><b>'+esc(r.name)+'</b>'+(r.price!=null&&r.kind==='produto'?'<div class="pr">'+fmtKz(r.price)+'</div>':'')+'<small>'+esc(r.desc||'')+'</small>'+extra+'</div><div class="ft">'+btn+'</div></div>';
 }
 /* VEG MATCH (P9) — o backend devolve score + motivos legíveis; nunca esconde
    os critérios usados (secção 11). Fallback offline: score local equivalente. */
@@ -3131,6 +3136,8 @@ function renderOpps(){
 async function saveOpp(e){e.preventDefault();if(!requireLogin())return;
  const u=currentUser();
  const rec={id:uid(),title:$('#oppTitulo').value.trim(),type:$('#oppTipo').value,desc:$('#oppDesc').value.trim(),province:$('#oppProv').value,value:+$('#oppValor').value||0,expiresAt:$('#oppValidade').value||'',createdAt:new Date().toISOString()};
+ try{const _f=$('#oppFoto');if(_f&&_f.files&&_f.files[0]){const _d=await vegFileToData(_f.files[0],640);if(_d){rec.media=_d;rec.mediaType='image';}}}catch(_e){}
+ try{const _v=($('#oppVideo')&&$('#oppVideo').value||'').trim();if(_v)rec.video=_v;}catch(_e){}
  let status='pendente';
  try{const res=await VEG_API.post('saveOpportunity',{opportunity:Object.assign({},rec)});
   if(res.success&&res.data){if(res.data.id)rec.id=res.data.id;if(res.data.status)status=res.data.status;}
@@ -3402,8 +3409,80 @@ db.users.forEach(function(u){ensureWallet(u);});saveDB();
 window.addEventListener('load',()=>{
  if(db.session&&currentUser()){enterApp();}else{$('#auth').classList.remove('hidden');
   const hm=location.hash.match(/ref=([A-Za-z0-9-]+)/);if(hm){const rf=hm[1].toUpperCase();const rfEl=document.getElementById('rgRef');if(rfEl)rfEl.value=rf;authTab('reg');toast('🎁 Convite VEG INDICA detectado — código '+rf+'. Complete a inscrição para entrar na rede!','ok');}}
- var BAD_URLS=['AKfycbx_0pHBx6Z-PgXtSUlx5wdDSm91EnB78ZutNn_usmtpLa787wHHfSgBTHrgaS7WQ5pB','AKfycbwfidfy-MdbqddqPyxASokcgJwIglS3YcaVBlcqrz3QXUQllj6wx1UfJAoFozvdqTlw','AKfycbyjOj_wzZldbtAnTvC1DuUmUzwlWMjLkTMQA4b0VWtgsW7Dl-m7TnKjukegGsggUp2hug'];if(BAD_URLS.some(function(b){return (db.cfg.apiUrl||'').indexOf(b)!==-1;})){db.cfg.apiUrl='';db.cfg.gsUrl='';saveDB();}$('#cfgGS').value=db.cfg.gsUrl||VEG_CONFIG.API_URL;$('#cfgMail').value=db.cfg.email;$('#cfgApi').value=db.cfg.apiUrl||VEG_CONFIG.API_URL;VEG_CONFIG.API_URL = db.cfg.apiUrl || VEG_CONFIG.API_URL;
+ var BAD_URLS=['AKfycbwfidfy-MdbqddqPyxASokcgJwIglS3YcaVBlcqrz3QXUQllj6wx1UfJAoFozvdqTlw','AKfycbyjOj_wzZldbtAnTvC1DuUmUzwlWMjLkTMQA4b0VWtgsW7Dl-m7TnKjukegGsggUp2hug'];if(BAD_URLS.some(function(b){return (db.cfg.apiUrl||'').indexOf(b)!==-1;})){db.cfg.apiUrl='';db.cfg.gsUrl='';saveDB();}$('#cfgGS').value=db.cfg.gsUrl||VEG_CONFIG.API_URL;$('#cfgMail').value=db.cfg.email;$('#cfgApi').value=db.cfg.apiUrl||VEG_CONFIG.API_URL;VEG_CONFIG.API_URL = db.cfg.apiUrl || VEG_CONFIG.API_URL;
 });
+
+/* ================= MELHORIAS VEG — itens 1, 2 e 6 ================= */
+const BONUS_WELCOME = 2000;   // Bónus automático em Kz (item 1)
+const BONUS_DAYS = 30;        // Prazo limite do bónus em dias
+
+/* Item 6 — saldo: normaliza saldo/balance vindos do servidor */
+function walletActive(){const u=currentUser();if(!u)return false;
+ if(u.role==='admin'||u.role==='superadmin'||u.isAdmin||u.freeAccess)return true;
+ const w=db.wallets[u.id];if(!w)return false;
+ if(typeof w.balance!=='number'&&typeof w.saldo==='number')w.balance=w.saldo;
+ return w.balance>0;}
+
+/* Item 1 — bónus automático ao criar conta */
+const _ensureWalletOrig = ensureWallet;
+function ensureWallet(u){const w=_ensureWalletOrig(u);
+ if(w&&!w._welcomed&&u&&u.created&&(Date.now()-u.created)<10*60e3){
+  w._welcomed=true;w.balance=(w.balance||0)+BONUS_WELCOME;
+  w.bonusRemaining=(w.bonusRemaining||0)+BONUS_WELCOME;
+  w.bonusAte=Date.now()+BONUS_DAYS*864e5;
+  (w.tx=w.tx||[]).push({ts:Date.now(),type:'credito',amount:BONUS_WELCOME,
+   concept:'Bónus de boas-vindas VEG (válido por '+BONUS_DAYS+' dias)'});
+  notify(u.id,'🎁 Bónus de boas-vindas: '+fmt(BONUS_WELCOME)+' Kz creditados na sua carteira, válidos por '+BONUS_DAYS+' dias. Use-os para conhecer todas as funcionalidades da plataforma.');
+  saveDB();}
+ return w;}
+
+/* Itens 1+6 — barra de saldo sem "Invalid Date", com prazo do bónus */
+function updateSaldoBar(){const u=currentUser();const el=$('#saldoBar');if(!el)return;
+ const free=!!(u&&(u.role==='admin'||u.role==='superadmin'||u.isAdmin||u.freeAccess));
+ if(free){el.className='notice';el.style.cssText='background:#F9EFCE;border:1px solid #D4AF37;color:#7A6210;font-weight:700';
+  el.innerHTML='👑 Acesso VEG GRATUITO (Administrador Principal) — sem pagamento de saldo, conforme normas internas da VEG.';return;}
+ const w=ensureWallet(u);
+ if(typeof w.balance!=='number'&&typeof w.saldo==='number')w.balance=w.saldo;
+ const now=Date.now();
+ if(w.bonusAte&&now>w.bonusAte&&(w.bonusRemaining||0)>0){
+  const ex=Math.min(w.bonusRemaining,w.balance);w.balance-=ex;w.bonusRemaining=0;
+  (w.tx=w.tx||[]).push({ts:now,type:'debito',amount:ex,concept:'Bónus de boas-vindas expirado (prazo de '+BONUS_DAYS+' dias terminado)'});
+  saveDB();}
+ const days=(w.bonusRemaining>0&&w.bonusAte)?Math.ceil((w.bonusAte-now)/864e5):null;
+ if(w.balance>0){el.className='notice';el.style.cssText='background:#DFF5E6;border:1px solid #1FA855;color:#147A3C;font-weight:700';
+  el.innerHTML='💰 Saldo disponível: '+fmt(w.balance)+' · Escritório ACTIVO'+(days!=null?' · bónus válido por mais '+days+' dia(s)':'')+'.';}
+ else{el.className='notice';el.style.cssText='background:#FDE3E3;border:1px solid #D64545;color:#B03030;font-weight:700';
+  el.innerHTML='⏳ Saldo esgotado. Carregue para reactivar o seu escritório virtual. · <a href="#" onclick="go('saldo');return false;">Carregar agora</a>';}
+ const sw=$('#sideWallet');if(sw){sw.textContent='Saldo: '+fmt(w.balance);sw.className=w.balance>0?'ok':'warn';}}
+
+/* Item 2a — painel de notificações abre sempre no topo */
+function toggleNotifs(e){if(e)e.stopPropagation();$('#uMenu').classList.add('hidden');
+ const p=$('#nPanel');p.classList.toggle('hidden');renderNotifs();
+ requestAnimationFrame(function(){p.scrollTop=0;});}
+
+/* Item 2b — notificação com linkUid abre a mensagem do novo inscrito */
+function renderNotifs(){const u=currentUser();
+ const list=u?db.notifs.filter(n=>n.userId===u.id):(db.notifs.filter(n=>n.userId==='__all__'));
+ $('#nList').innerHTML=list.length?list.slice(0,30).map(n=>
+  '<div class="notif-item" style="cursor:'+(n.linkUid?'pointer':'default')+';'+(n.read?'':'background:#FBF6E7')+'"'+
+  (n.linkUid?' onclick="vegMsgFromNotif('+JSON.stringify(n.linkUid)+')"':'')+'>'+
+  esc(n.text)+'<br><small>'+new Date(n.at).toLocaleString('pt-AO')+'</small></div>').join('')
+  :'<div class="empty">Sem notificações.</div>';
+ if(u){db.notifs.forEach(n=>{if(n.userId===u.id)n.read=true;});saveDB();setTimeout(renderBadges,400);}}
+function vegMsgFromNotif(uid2){const t=db.users.find(x=>x.id===uid2);
+ $('#nPanel').classList.add('hidden');go('msgs');
+ if(t)toast('💬 Conversa com '+t.name+' — parabenize e oriente o novo membro da VEG.','ok');}
+
+/* Item 4b — compressor de imagem (limite do Google Sheets ~45KB) */
+function vegFileToData(file,maxW){return new Promise(function(res){if(!file)return res(null);
+ const r=new FileReader();r.onload=function(){const img=new Image();
+  img.onload=function(){const c=document.createElement('canvas');
+   const s=Math.min(1,(maxW||640)/img.width);
+   c.width=Math.max(1,Math.round(img.width*s));c.height=Math.max(1,Math.round(img.height*s));
+   c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+   res(c.toDataURL('image/jpeg',0.6));};
+  img.onerror=function(){res(null);};img.src=r.result;};
+ r.onerror=function(){res(null);};r.readAsDataURL(file);});}
 </script>
 </body>
 </html>
