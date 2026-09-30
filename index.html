@@ -1295,7 +1295,14 @@ function fileToData(file,cb,max){max=max||5*1024*1024;if(!file)return cb('');if(
 const VEG_CONFIG = {
   API_URL: "https://script.google.com/macros/s/AKfycbwa5qPq2frqTpOaIwIZnvpe6eFVdHWrvITkhzvW18pwtREPJ5dDVjuD66ukTfiso5r8Qw/exec",   // URL do Web App Code.gs (deployment /exec) - tambem configuravel no ecra Admin (campo API)
   TIMEOUT_MS: 30000,
-  APP_VERSION: 1
+  APP_VERSION: 1,
+  /* S-02 (2026-09-30): saldo experimental temporario para novas inscricoes +
+     lista de emails autorizados pela administracao VEG (unicos que podem ser
+     admin/superadmin). Quem define papel administrativo e a VEG, nunca o
+     registo automatico. */
+  TRIAL_BALANCE: 5000,        // Kz creditados na conta nova (experimental, temporario)
+  TRIAL_HOURS: 72,            // duracao do periodo experimental
+  ADMIN_EMAILS: ['vozempreendedoraglobal@gmail.com']
 };
 
 const VEG_API = {
@@ -1606,6 +1613,16 @@ const VEG_SYNC = {
         Object.keys(remote).forEach(function(key){db[k][key]=remote[key];n++;});
       }
     });
+    /* S-02 (2026-09-30): mesmo que o backend envie papel elevado por engano,
+       o utilizador com sessao iniciada nunca e promovido sem estar na lista
+       de emails autorizados pela administracao VEG. */
+    try{
+      const cu=(typeof currentUser==='function')?currentUser():null;
+      if(cu&&db.users){
+        const i=db.users.findIndex(function(x){return x.id===cu.id;});
+        if(i>=0)db.users[i].role=vegSafeRole(db.users[i].email,db.users[i].role);
+      }
+    }catch(e){}
     return n;
   },
 
@@ -2076,7 +2093,19 @@ function doLogin(e){e.preventDefault();const c=$('#liContacto').value.trim().toL
     funcionem em qualquer navegador. Sem esta validação remota, novos
     utilizadores ficavam bloqueados com "credenciais inválidas". */
  vegRemoteLogin(c,p);}
-async function vegRemoteLogin(c,p){
+async /* S-02 (2026-09-30): o papel administrativo NUNCA e concedido pelo registo
+   nem pelo backend. Apenas os emails autorizados pela administracao VEG
+   (VEG_CONFIG.ADMIN_EMAILS) podem manter admin/superadmin; todos os outros
+   sao forcados para 'user'. Assim as contas novas nunca funcionam como
+   administrador principal. */
+function vegSafeRole(email,remoteRole){
+ const em=(email||'').toLowerCase().trim();
+ if(remoteRole==='superadmin'||remoteRole==='admin'){
+  return (VEG_CONFIG.ADMIN_EMAILS||[]).includes(em)?remoteRole:'user';
+ }
+ return remoteRole||'user';
+}
+function vegRemoteLogin(c,p){
  const err=function(msg){$('#authErr').textContent=msg;$('#authErr').style.display='block';};
  err('A validar as suas credenciais no servidor VEG...');
  const hash=await vegHash(p);
@@ -2085,8 +2114,9 @@ async function vegRemoteLogin(c,p){
   const ru=res.data.user;
   let nu=db.users.find(x=>x.id===ru.id);
   if(!nu){
-   nu={id:ru.id||uid(),name:ru.name||'',email:(ru.email||c).toLowerCase(),phone:ru.phone||'',pass:p,role:ru.role||'user',active:ru.active!==false,created:ru.created||ru.createdAt||Date.now(),interests:ru.interests||'',profession:ru.profession||'',province:ru.province||'',idade:ru.idade||'',vegno:ru.vegno||'',tfa:!!ru.tfa,passHash:hash};
+   nu={id:ru.id||uid(),name:ru.name||'',email:(ru.email||c).toLowerCase(),phone:ru.phone||'',pass:p,role:vegSafeRole(ru.email||c,ru.role),active:ru.active!==false,created:ru.created||ru.createdAt||Date.now(),interests:ru.interests||'',profession:ru.profession||'',province:ru.province||'',idade:ru.idade||'',vegno:ru.vegno||'',tfa:!!ru.tfa,passHash:hash};
    db.users.push(nu);
+   if(nu.role==='user'&&!(db.wallets&&db.wallets[nu.id])){try{ensureWallet(nu);}catch(e){}}
   }else{nu.pass=p;if(hash)nu.passHash=hash;if(ru.active!==undefined)nu.active=ru.active;}
   logAction('Login via backend central (novo dispositivo)',nu.email);
   try{await VEG_SYNC.pull();}catch(e){}
@@ -2905,7 +2935,22 @@ function showRecover(){doLogout();authTab('rec');}
 /* ================= VEG SALDO ================= */
 const PLANS={'Diário':{days:1,Kz:100,USD:1,EUR:1},'Semanal':{days:7,Kz:650,USD:6,EUR:5},'Quinzenal':{days:15,Kz:1100,USD:10,EUR:9},'Mensal':{days:30,Kz:2000,USD:18,EUR:16}};
 const SALDO_LIMITS={Kz:{min:100,max:10000},USD:{min:1,max:100},EUR:{min:1,max:100}};
-function ensureWallet(u){if(!db.wallets)db.wallets={};if(!db.wallets[u.id]){db.wallets[u.id]={userId:u.id,currency:'Kz',balance:0,reserved:0,used:0,refunded:0,tx:[],ledger:[],migrated:true};}return migrateWallet(db.wallets[u.id]);}
+function ensureWallet(u){if(!db.wallets)db.wallets={};
+ if(!db.wallets[u.id]){
+  /* S-02 (2026-09-30): novas contas (papel 'user') recebem saldo EXPERIMENTAL
+     TEMPORARIO — creditado para conhecer a plataforma; vai diminuindo a cada
+     funcionalidade usada e expira apos VEG_CONFIG.TRIAL_HOURS horas. Nao e
+     saldo definitivo: quando terminar, o utilizador passa a carregar. */
+  const trial=(u&&u.role==='user');
+  const w={userId:u.id,currency:'Kz',balance:trial?(VEG_CONFIG.TRIAL_BALANCE||0):0,reserved:0,used:0,refunded:0,tx:[],ledger:[],migrated:true};
+  if(trial){
+   w.trial=true;
+   w.trialEnds=Date.now()+(VEG_CONFIG.TRIAL_HOURS||72)*3600000;
+   w.ledger.unshift({id:'TRIAL-'+uid(),ref:'SALDO-EXPERIMENTAL',at:Date.now(),userId:u.id,userName:u.name||'',service:'sistema',description:'Saldo experimental gratuito ('+(VEG_CONFIG.TRIAL_HOURS||72)+'h) — use para conhecer a plataforma VEG',type:'trial',amount:(VEG_CONFIG.TRIAL_BALANCE||0),balanceBefore:0,balanceAfter:(VEG_CONFIG.TRIAL_BALANCE||0),status:'confirmado'});
+  }
+  db.wallets[u.id]=w;
+ }
+ return migrateWallet(db.wallets[u.id]);}
 function migrateWallet(w){
   if(!w.migrated){
     if(w.activeUntil){
@@ -2926,7 +2971,7 @@ function migrateWallet(w){
 }
 function myWallet(){const u=currentUser();return u?ensureWallet(u):null;}
 function isFreeAccess(u){if(!u)return false;if(u.role==='admin'||u.role==='superadmin'||u.role==='staff')return true;return db.partners.some(p=>p.userId===u.id&&p.status==='aprovado');}
-function walletActive(){const u=currentUser();if(!u)return true;if(isFreeAccess(u))return true;const w=myWallet();return !!(w&&w.balance>0);}
+function walletActive(){const u=currentUser();if(!u)return true;if(isFreeAccess(u))return true;const w=myWallet();if(!w)return false;const trialOk=w.trial?(w.trialEnds||0)>Date.now():true;return trialOk&&((w.balance||0)>0);}
 function walletGuard(){if(walletActive())return true;toast('⏳ O seu saldo expirou. Carregue o VEG Saldo para continuar a trabalhar no escritório.','er');go('saldo');return false;}
 function fmtMoney(v,cur){return Number(v).toLocaleString('pt-AO',{minimumFractionDigits:2})+' '+(cur==='Kz'?'Kz':cur);}
 function updSaldoForm(){const f1=$('#sdMoeda'),f3=$('#sdValor'),f4=$('#sdInfo');if(!f1||!f3||!f4)return;const cur=f1.value,L=SALDO_LIMITS[cur],v=f3;v.min=L.min;v.max=L.max;if(+v.value<L.min)v.value=L.min;if(+v.value>L.max)v.value=L.max;const w=myWallet();f4.innerHTML='O valor carregado fica disponível como <b>saldo</b> para activar campanhas e serviços, conforme a sua necessidade. Saldo actual: <b style="color:var(--gold2)">'+fmtMoney(w?w.balance:0,cur)+'</b>.';}
