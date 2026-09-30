@@ -1293,7 +1293,7 @@ function fileToData(file,cb,max){max=max||5*1024*1024;if(!file)return cb('');if(
 /* ================= Integrações externas (graciosas) ================= */
 /* ================= VEG API CLIENT ================= */
 const VEG_CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbwa5qPq2frqTpOaIwIZnvpe6eFVdHWrvITkhzvW18pwtREPJ5dDVjuD66ukTfiso5r8Qw/exec",   // URL do Web App Code.gs (deployment /exec) - tambem configuravel no ecra Admin (campo API)
+  API_URL: "https://script.google.com/macros/s/AKfycbzA6GJDnC2S6-XZvMvC6R1Wx_40QPw52e2lfOSyihlXnRwfbPYXHNgoFP-UiAte_yZXMw/exec",   // URL do Web App Code.gs (deployment /exec) - tambem configuravel no ecra Admin (campo API)
   TIMEOUT_MS: 30000,
   APP_VERSION: 1,
   /* S-02 (2026-09-30): saldo experimental temporario para novas inscricoes +
@@ -2109,7 +2109,13 @@ async function vegRemoteLogin(c,p){
  const err=function(msg){$('#authErr').textContent=msg;$('#authErr').style.display='block';};
  err('A validar as suas credenciais no servidor VEG...');
  const hash=await vegHash(p);
- const res=await VEG_API.post('authLogin',{contacto:c,senhaHash:hash});
+ /* S-02 (2026-09-30): crypto.subtle so existe em contexto seguro (HTTPS).
+    Se o hash nao puder ser gerado (pagina aberta via http:// ou file://),
+    enviamos tambem a senha em texto simples para o backend validar —
+    caso contrario TODAS as contas sem cache local caem em
+    "Credenciais invalidas". */
+ if(!hash)console.warn('[VEG] Contexto sem HTTPS — crypto.subtle indisponivel; a enviar senha em claro para authLogin.');
+ const res=await VEG_API.post('authLogin',{contacto:c,senhaHash:hash||undefined,senha:hash?undefined:p});
  if(res.success&&res.data&&res.data.user){
   const ru=res.data.user;
   let nu=db.users.find(x=>x.id===ru.id);
