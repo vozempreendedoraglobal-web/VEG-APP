@@ -2093,7 +2093,7 @@ function doLogin(e){e.preventDefault();const c=$('#liContacto').value.trim().toL
     funcionem em qualquer navegador. Sem esta validação remota, novos
     utilizadores ficavam bloqueados com "credenciais inválidas". */
  vegRemoteLogin(c,p);}
-async /* S-02 (2026-09-30): o papel administrativo NUNCA e concedido pelo registo
+/* S-02 (2026-09-30): o papel administrativo NUNCA e concedido pelo registo
    nem pelo backend. Apenas os emails autorizados pela administracao VEG
    (VEG_CONFIG.ADMIN_EMAILS) podem manter admin/superadmin; todos os outros
    sao forcados para 'user'. Assim as contas novas nunca funcionam como
@@ -2105,7 +2105,7 @@ function vegSafeRole(email,remoteRole){
  }
  return remoteRole||'user';
 }
-function vegRemoteLogin(c,p){
+async function vegRemoteLogin(c,p){
  const err=function(msg){$('#authErr').textContent=msg;$('#authErr').style.display='block';};
  err('A validar as suas credenciais no servidor VEG...');
  const hash=await vegHash(p);
