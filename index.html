@@ -2130,6 +2130,27 @@ async function vegRemoteLogin(c,p){
  }
  if(res.error&&res.error.code==='ACCOUNT_SUSPENDED'){err('Conta suspensa. Contacte o atendimento VEG.');return;}
  if(res.error&&res.error.code==='BACKEND_OFFLINE'){err('Sem ligação ao servidor. Tente novamente com ligação à internet.');return;}
+ /* S-02 (2026-09-30) AUTO-REPARACAO: se o servidor rejeitou as credenciais
+    mas existe uma conta LOCAL com este contacto + senha (ex.: criada neste
+    dispositivo enquanto o servidor estava indisponivel, ou deployment novo
+    cuja folha ainda nao tem a conta), reenviamos a conta para o servidor e
+    tentamos o login outra vez. Sem isto essas contas ficavam bloqueadas com
+    "Credenciais invalidas" para sempre. */
+ const lu=db.users.find(x=>((x.email||'').toLowerCase()===c||x.phone===c)&&x.pass===p);
+ if(lu){
+  err('Conta encontrada neste dispositivo — a sincronizar com o servidor VEG...');
+  await VEG_API.post('authRegister',{user:_vegSanitize(lu),senha:p});
+  const res2=await VEG_API.post('authLogin',{contacto:c,senhaHash:hash||undefined,senha:hash?undefined:p});
+  if(res2.success&&res2.data&&res2.data.user){
+   const ru=res2.data.user;
+   let nu=db.users.find(x=>x.id===ru.id)||lu;
+   nu.pass=p;if(hash)nu.passHash=hash;if(ru.active!==undefined)nu.active=ru.active;
+   if(db.users.indexOf(nu)<0)db.users.push(nu);
+   logAction('Login via backend (auto-reparacao)',nu.email);
+   try{await VEG_SYNC.pull();}catch(e){}
+   startLogin(nu,res2.data.session||null);return;
+  }
+ }
  err(res.message||'Credenciais inválidas. Verifique o contacto e a senha.');
 }
 /* Hash SHA-256 da senha (com sal interno) — usado apenas para validação
@@ -2166,8 +2187,9 @@ async function vegObtainSession(u){
  if(!u||!u.pass||!VEG_CONFIG.API_URL)return;
  try{
   const hash=u.passHash||await vegHash(u.pass);
-  if(!hash)return;
-  const res=await VEG_API.post('authLogin',{contacto:u.email||u.phone,senhaHash:hash});
+  /* S-02 (2026-09-30): sem HTTPS o hash e null — enviar tambem a senha
+     para o token de sessao (Fase 7) continuar a funcionar. */
+  const res=await VEG_API.post('authLogin',{contacto:u.email||u.phone,senhaHash:hash||undefined,senha:hash?undefined:u.pass});
   if(res.success&&res.data&&res.data.session&&db.session&&db.session.uid===u.id){vegAttachSession(res.data.session);saveDB();}
  }catch(e){}
 }
@@ -2175,12 +2197,21 @@ async function vegObtainSession(u){
    só depois empurra o delta — a partir da Fase 7 o syncDelta exige token. */
 async function vegRegisterRemote(u){
  if(!VEG_CONFIG.API_URL)return;
- try{
-  const clean=_vegSanitize(u);
-  await VEG_API.post('authRegister',{user:clean});
+ /* VEG_API.request nao lanca excepcao em rejeicao — devolve
+    {success:false,message}; por isso avaliamos res.success directamente. */
+ const res=await VEG_API.post('authRegister',{user:_vegSanitize(u),senha:u.pass});
+ if(res&&res.success){
   await vegObtainSession(u);
   try{VEG_SYNC.pushNow();}catch(e){}
- }catch(e){}
+  toast('Conta ligada ao servidor VEG ✔','ok');
+ }else{
+  const msg=String((res&&res.message)||'');
+  if(/j[aá] existe|exists|duplicate|duplic/i.test(msg)){
+   /* a conta ja esta no servidor — estado normal, sem aviso */
+  }else{
+   toast('Aviso: o servidor VEG nao respondeu — a conta ficou apenas neste dispositivo. Tente entrar mais tarde para a sincronizar.','er');
+  }
+ }
 }
 function doRegister(e){e.preventDefault();if($('#rgSenha').value!==$('#rgSenha2').value){$('#authErr').textContent='As senhas não coincidem.';$('#authErr').style.display='block';return;}
  const email=$('#rgEmail').value.trim().toLowerCase();if(db.users.some(u=>u.email.toLowerCase()===email)){$('#authErr').textContent='Já existe uma conta com este e-mail.';$('#authErr').style.display='block';return;}
