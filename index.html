@@ -1512,7 +1512,7 @@ const VEG_SYNC = {
     const res=await VEG_API.post('syncDelta',{cacheVersion:VEG_CONFIG.APP_VERSION,userId:(db.session&&db.session.uid)||null,collections:cols});
     this.techLog('syncDelta',res.success,res.error&&res.error.code,Date.now()-started);
     this._pushing=false;
-    if(res.success){this._dirty=false;this.setState('synced');
+    if(res.success){this._dirty=false;this.setState('synced');if(typeof vegRetryPendingDebits==='function')vegRetryPendingDebits();
       /* CICLO 2: operação confirmada no backend — limpar a fila pendente. */
       try{localStorage.removeItem('VEG_SYNC_PENDING');}catch(e){}}
     else if(res.error&&(res.error.code==='AUTH_REQUIRED'||res.error.code==='SESSION_EXPIRED')){
@@ -1658,7 +1658,7 @@ const VEG_SYNC = {
     if(!VEG_CONFIG.API_URL){this.setState('local');return;}
     this.setState('syncing');
     const res=await this.pull();
-    if(res.success){this._dirty=false;this.setState('synced');}
+    if(res.success){this._dirty=false;this.setState('synced');if(typeof vegRetryPendingDebits==='function')vegRetryPendingDebits();}
     else this.setState('error');
     /* CICLO 2: retomar a fila pendente de uma sessão anterior — o utilizador
        não perde operações por o backend ter estado indisponível (sec. 9). */
@@ -1826,6 +1826,29 @@ async function vegConsume(service,description,amount,opId){
   _vegOpsInFlight[key].finally(function(){delete _vegOpsInFlight[key];});
   return _vegOpsInFlight[key];
 }
+/* P2 (2026-10): wrapper único de submissão — estados A/B/C/D + anti-duplo-clique. */
+async function vegSubmit(btn,actionFn,opts){
+ opts=opts||{};
+ if(btn){if(btn.dataset.vegBusy)return{ok:false,__cancel:true};btn.disabled=true;btn.dataset.vegBusy='1';}
+ try{
+  const r=await actionFn();
+  if(r&&r.__cancel)return r;
+  if(r&&r.__offline){toast('📡 Sem comunicação com o servidor. A operação NÃO foi submetida e ficou pendente.','er');return r;}
+  if(r&&r.ok===false){
+   if(r.reason==='insufficient'){toast('Saldo insuficiente. Adicione '+fmtKz(r.needed||0)+' para confirmar.','er');if(opts.onInsufficient)opts.onInsufficient(r);}
+   else toast('❌ Não foi possível submeter: '+((r&&r.message)||'erro no servidor')+'.','er');
+   return r;}
+  const ref=(r&&r.op&&r.op.ref)||(r&&r.ref)||(r&&r.id)||'';
+  toast('✅ Submissão realizada com sucesso'+(ref?(' · Ref '+ref):'')+' · '+new Date().toLocaleString('pt-AO'),'ok');
+  if(opts.done)setTimeout(opts.done,600);
+  return r;
+ }catch(e){
+  if(!navigator.onLine)toast('📡 Sem ligação. A operação ficou pendente — não volte a submeter.','er');
+  else toast('⏳ Operação pendente de sincronização. Será enviada automaticamente.','er');
+  return{ok:false,__offline:true};
+ }finally{
+  if(btn){btn.disabled=false;delete btn.dataset.vegBusy;}}
+}
 async function _vegConsume(w,u,service,description,amount,key){
   amount=Math.round(+amount*100)/100;
   if(!(amount>0))return{ok:false,reason:'invalid'};
@@ -1834,13 +1857,38 @@ async function _vegConsume(w,u,service,description,amount,key){
   const before=w.balance;
   w.balance=Math.round((w.balance-amount)*100)/100;
   w.used=Math.round(((w.used||0)+amount)*100)/100;
-  const op={id:key,ref:'OP-'+String(key).slice(-6).toUpperCase(),at:Date.now(),userId:u.id,userName:u.name,service:service,description:description||'',type:'debit',amount:amount,balanceBefore:before,balanceAfter:w.balance,status:'confirmado'};
+  const op={id:key,ref:'OP-'+String(key).slice(-6).toUpperCase(),at:Date.now(),userId:u.id,userName:u.name,service:service,description:description||'',type:'debit',amount:amount,balanceBefore:before,balanceAfter:w.balance,status:'confirmado',pendingSync:true};
   w.ledger.unshift(op);
   if(!db.ledger)db.ledger=[];
   db.ledger.unshift(op);
   saveDB();
   pushData({tipo:'consumo',ref:op.ref,servico:service,descricao:description||'',valor:amount,saldo_apos:w.balance});
+  /* P1 (2026-10): o débito é confirmado no backend (fonte de verdade). Se a rede falhar,
+     fica pendingSync e é reenviado por vegRetryPendingDebits() após cada sync bem-sucedida. */
+  vegBackendDebit(op).then(function(r){
+   if(r&&r.ok){op.pendingSync=false;saveDB();
+    toast('✅ Submissão concluída. Ref '+op.ref+' · '+new Date(op.at).toLocaleString('pt-AO'),'ok');}
+  }).catch(function(){
+   op.pendingSync=true;saveDB();
+   toast('⏳ Débito '+op.ref+' guardado neste dispositivo, pendente de sincronização. Não volte a submeter — será enviado automaticamente.','er');});
   return{ok:true,op:op};
+}
+async function vegBackendDebit(op){
+ const u=currentUser();if(!u||!VEG_CONFIG.API_URL)return{ok:false,reason:'noapi'};
+ try{
+  const r=await VEG_API.request('createWalletTransaction',{id:op.id,userId:u.id,type:'debito',amount:op.amount,concept:op.description,service:op.service,ref:op.ref});
+  if(r&&r.success)return{ok:true,saldo:r.data&&r.data.saldo};
+  if(r&&r.error&&r.error.code==='INSUFFICIENT'&&typeof vegRefreshWallet==='function')vegRefreshWallet();
+  return{ok:false,reason:(r&&r.error&&r.error.code)||'rejected',message:r&&r.message};
+ }catch(e){return Promise.reject(e);}
+}
+function vegPendingDebitOps(){
+ const u=currentUser();if(!u||!db.wallets||!db.wallets[u.id])return[];
+ return (db.wallets[u.id].ledger||[]).filter(function(o){return o.type==='debit'&&o.pendingSync;});
+}
+function vegRetryPendingDebits(){
+ vegPendingDebitOps().forEach(function(op){
+  vegBackendDebit(op).then(function(r){if(r&&r.ok){op.pendingSync=false;saveDB();}}).catch(function(){});});
 }
 function vegPrice(service){
   ensurePrices();
@@ -2109,7 +2157,7 @@ function smCreateObjective(){
 
 /* Sincronizacao em lote do db local (opcional, chamavel pelo Admin) */
 /* código morto removido no Ciclo 4 (2026-09-30): função "vegSyncFull" sem qualquer chamada — verificação por varredura estática de referências. */
-function wppAtend(){window.open('https://wa.me/244933803862?text='+encodeURIComponent('Olá VEG! Vim da VEG APP e preciso de ajuda.'),'_blank');}
+function wppAtend(){window.open('https://wa.me/244933803862?text='+encodeURIComponent('Olá, VEG – Voz Empreendedora Global. Estou a contactar-vos através da VEG APP e necessito de assistência. Gostaria de receber orientação sobre o serviço de que necessito.'),'_blank');}
 function inviteFriends(){const u=currentUser();const code=u?u.id.toUpperCase():'VEG';if(!requireLogin())return;const txt='Olá! Conhece a VEG APP — o escritório virtual de negócios, serviços e soluções. Regista-te com o meu código VEG INDICA: '+code;window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');logAction('VEG Indica — convite enviado','-');}
 
 /* ================= AUTH ================= */
@@ -3650,7 +3698,8 @@ const BONUS_DAYS = 30;        // Prazo limite do bónus em dias
 
 /* Item 6 — saldo: normaliza saldo/balance vindos do servidor */
 function walletActive(){const u=currentUser();if(!u)return false;
- if(u.role==='admin'||u.role==='superadmin'||u.isAdmin||u.freeAccess)return true;
+ if(u.role==='admin'||u.role==='superadmin'||u.role==='staff')return true;
+ if(db.partners&&db.partners.some(function(p){return p.userId===u.id&&p.status==='aprovado';}))return true;
  const w=db.wallets[u.id];if(!w)return false;
  if(typeof w.balance!=='number'&&typeof w.saldo==='number')w.balance=w.saldo;
  return w.balance>0;}
@@ -3672,14 +3721,38 @@ function ensureWallet(u){const w=_ensureWalletBase(u);
   saveDB();}
  return w;}
 
+/* P3 (2026-10): cartão transparente do período experimental (P2.2 do PDF). */
+function renderTrialCard(u,w,now){
+ const el=$('#saldoBar');if(!el)return;
+ let card=document.getElementById('vegTrialCard');if(card)card.remove();
+ if(!w||!w.trial||!w.trialEnds)return;
+ if(typeof isFreeAccess==='function'&&isFreeAccess(u))return;
+ const left=w.trialEnds-now;
+ card=document.createElement('div');card.id='vegTrialCard';card.className='notice';
+ if(left>0){
+  const h=Math.floor(left/3600000),m=Math.floor(left%3600000/60000);
+  card.style.cssText='background:#EAF3FF;border:1px solid #2E6FB7;color:#1B4E8A;font-weight:600;margin-top:8px';
+  card.innerHTML='🧪 <b>Período experimental VEG</b> — restam <b>'+h+'h '+m+'min</b> · Saldo experimental: '+fmt(w.balance)+' Kz.<br><small>Ao terminar, carregue o VEG Saldo para continuar. Os serviços que consomem saldo são identificados antes de confirmar.</small>';
+ }else{
+  card.style.cssText='background:#FDE3E3;border:1px solid #D64545;color:#B03030;font-weight:600;margin-top:8px';
+  card.innerHTML='⏳ <b>Período experimental terminado.</b> Carregue o VEG Saldo para reactivar todas as funcionalidades.';}
+ el.parentNode.insertBefore(card,el.nextSibling);
+}
+
 /* Itens 1+6 — barra de saldo sem "Invalid Date", com prazo do bónus */
 function updateSaldoBar(){const u=currentUser();const el=$('#saldoBar');if(!el)return;
- const free=!!(u&&(u.role==='admin'||u.role==='superadmin'||u.isAdmin||u.freeAccess));
- if(free){el.className='notice';el.style.cssText='background:#F9EFCE;border:1px solid #D4AF37;color:#7A6210;font-weight:700';
-  el.innerHTML='👑 Acesso VEG GRATUITO (Administrador Principal) — sem pagamento de saldo, conforme normas internas da VEG.';return;}
+ let free=false,freeLabel='';
+ if(u){
+  if(u.role==='admin'||u.role==='superadmin'){free=true;freeLabel='Acesso VEG sem saldo — Administrador VEG';}
+  else if(u.role==='staff'){free=true;freeLabel='Acesso VEG sem saldo — Equipa VEG';}
+  else if(db.partners&&db.partners.some(function(p){return p.userId===u.id&&p.status==='aprovado';})){free=true;freeLabel='Acesso VEG sem saldo — Parceiro aprovado';}}
+ if(free){const tc0=document.getElementById('vegTrialCard');if(tc0)tc0.remove();
+  el.className='notice';el.style.cssText='background:#F9EFCE;border:1px solid #D4AF37;color:#7A6210;font-weight:700';
+  el.innerHTML='👑 '+freeLabel+' — sem pagamento de saldo, conforme normas internas da VEG.';return;}
  const w=ensureWallet(u);
  if(typeof w.balance!=='number'&&typeof w.saldo==='number')w.balance=w.saldo;
  const now=Date.now();
+ renderTrialCard(u,w,now);
  if(w.bonusAte&&now>w.bonusAte&&(w.bonusRemaining||0)>0){
   const ex=Math.min(w.bonusRemaining,w.balance);w.balance-=ex;w.bonusRemaining=0;
   (w.tx=w.tx||[]).push({ts:now,type:'debito',amount:ex,concept:'Bónus de boas-vindas expirado (prazo de '+BONUS_DAYS+' dias terminado)'});
@@ -3700,9 +3773,10 @@ function toggleNotifs(e){if(e)e.stopPropagation();$('#uMenu').classList.add('hid
 function renderNotifs(){const u=currentUser();
  const list=u?db.notifs.filter(n=>n.userId===u.id):(db.notifs.filter(n=>n.userId==='__all__'));
  $('#nList').innerHTML=list.length?list.slice(0,30).map(n=>
-  '<div class="notif-item" style="cursor:'+(n.linkUid?'pointer':'default')+';'+(n.read?'':'background:#FBF6E7')+'"'+
+  '<div class="notif-item" style="cursor:'+((n.linkUid||n.linkScreen)?'pointer':'default')+';'+(n.read?'':'background:#FBF6E7')+'"'+
   (n.linkUid?' onclick="vegMsgFromNotif('+JSON.stringify(n.linkUid)+')"':'')+'>'+
-  esc(n.text)+'<br><small>'+new Date(n.at).toLocaleString('pt-AO')+'</small></div>').join('')
+  esc(n.text)+'<br><small>'+new Date(n.at).toLocaleString('pt-AO')+'</small>'+
+  (n.linkScreen?' <button class="btn sm" onclick="event.stopPropagation();go(\''+String(n.linkScreen).replace(/[^a-z0-9_-]/gi,'')+'\')">Ver →</button>':'')+'</div>').join('')
   :'<div class="empty">Sem notificações.</div>';
  if(u){db.notifs.forEach(n=>{if(n.userId===u.id)n.read=true;});saveDB();setTimeout(renderBadges,400);}}
 function vegMsgFromNotif(uid2){const t=db.users.find(x=>x.id===uid2);
