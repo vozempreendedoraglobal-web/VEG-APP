@@ -2393,7 +2393,7 @@ function go(s){const a=document.querySelector('nav a[data-s="'+s+'"]');if(!a)ret
  const curEl=document.querySelector('.scr.on');const cur=curEl?curEl.id:null;
  if(navBack){navBack=false;}else if(cur&&cur!==s){scrHistory.push(cur);if(scrHistory.length>30)scrHistory.shift();}
  updNavBtns();
- $$('.scr').forEach(x=>x.classList.remove('on'));const sec=$('#'+s);if(sec)sec.classList.add('on');$$('nav a').forEach(x=>x.classList.remove('on'));a.classList.add('on');window.scrollTo({top:0});renderScreen(s);if(s==='mapa'&&vegMap)setTimeout(()=>vegMap.invalidateSize(),150);}
+ $$('.scr').forEach(x=>x.classList.remove('on'));const sec=$('#'+s);if(sec)sec.classList.add('on');$$('nav a').forEach(x=>x.classList.remove('on'));a.classList.add('on');window.scrollTo({top:0});renderScreen(s);if(s==='mapa'&&vegMap)setTimeout(()=>vegMap.invalidateSize(),150);setTimeout(function(){vegConsumePending(s);},120);}
 function goHome(){scrHistory.length=0;updNavBtns();go('inicio');}
 function goBack(){const prev=scrHistory.pop();updNavBtns();if(prev){navBack=true;go(prev);}else{go('inicio');}}
 function updNavBtns(){const b=$('#btnBack');if(b){b.disabled=!scrHistory.length;b.style.opacity=scrHistory.length?'1':'.45';}}
@@ -2741,7 +2741,38 @@ function payInstructions(id){const a=db.appts.find(x=>x.id===id);if(!a||!a.quote
  '<div class="kv"><span>💳 TPA</span><b>No atendimento VEG</b></div>'+
  '<div class="fld" style="margin-top:12px"><label>Referência do pagamento (opcional)</label><input id="payRef" placeholder="Nº de transação / comprovativo"></div>'+
  '<button class="btn btn-green" onclick="notifyPaid(\''+a.id+'\')">✔ Já efectuei o pagamento</button> <button class="btn btn-grey" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove())">Fechar</button>');}
-function notifyPaid(id){const a=db.appts.find(x=>x.id===id);if(!a)return;a.pay=a.pay||{status:'pendente'};a.pay.refClient=$('#payRef').value.trim();a.pay.notified=true;apptHist(a,'cliente','Cliente indicou que pagou',a.pay.refClient||'');db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(ad=>notify(ad.id,'💳 Cliente indicou pagamento de '+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz para «'+a.serv+'»'+(a.pay.refClient?' · ref: '+a.pay.refClient:'')+'. Confirme o recebimento na Central de Agendamentos.'));logAction('Cliente indicou pagamento',a.serv);saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderAgenda();toast('Pagamento sinalizado. A VEG irá confirmar.','ok');}
+/* ============================================================
+   VEG PAY — PREPARAÇÃO PARA GATEWAY REAL (Funcionalidade C)
+   Máquina de estados preparada (NÃO há gateway ativo, NÃO há
+   simulação): o cliente SINALIZA, o VEG ADMIN CONFIRMA manual.
+   Falhas previstas para retry seguro: timeout, duplicado, recusado,
+   interrupção, resposta incompleta, falha de comunicação.
+   NENHUMA chave/credencial no frontend — ficarão no backend.
+   ============================================================ */
+var VEG_PAY_STATES={INICIADO:'INICIADO',PROCESSANDO:'PROCESSANDO',CONFIRMADO:'CONFIRMADO',FALHOU:'FALHOU',REEMBOLSADO:'REEMBOLSADO'};
+/* Modelo A actual equivale a: sinalizado → PROCESSANDO · confirmado → CONFIRMADO */
+
+function notifyPaid(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
+ a.pay=a.pay||{status:'pendente'};
+ a.pay.refClient=$('#payRef').value.trim();
+ a.pay.notified=true;
+ a.pay.state=VEG_PAY_STATES.PROCESSANDO;
+ if(!db.payments)db.payments=[];
+ db.payments.unshift({id:uid(),apptId:a.id,cliente:currentUser()?currentUser().id:'',
+   clienteNome:currentUser()?currentUser().name:'',pedido:a.code||a.id,encomenda:'',
+   valor:Number(a.quote&&a.quote.amount)||0,referencia:a.pay.refClient||'',
+   estado:'sinalizado',vegPayState:a.pay.state,canal:(typeof VEG_PAY_CHANNEL!=='undefined'?VEG_PAY_CHANNEL:''),
+   transacao:'',data:new Date().toISOString(),created:Date.now()});
+ apptHist(a,'cliente','Cliente indicou que pagou',a.pay.refClient||'');
+ db.users.filter(x=>x.role==='admin'||x.isAdmin).forEach(ad=>{
+ const nid=uid();
+ notify(ad.id,'💳 Cliente indicou pagamento de '+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz para «'+a.serv+'»'+(a.pay.refClient?' · ref: '+a.pay.refClient:'')+'. Confirme o recebimento na Central de Agendamentos.',nid);
+ const nn=db.notifs.find(x=>x.id===nid);
+ if(nn){nn.linkScreen='agenda';nn.linkEntity=a.id;nn.targetType='pedido';}
+});
+ logAction('Cliente indicou pagamento',a.serv);saveDB();
+ document.querySelectorAll('.mback').forEach(m=>m.remove());
+ renderAgenda();toast('Pagamento sinalizado. A VEG irá confirmar.','ok');}
 function markPayAdmin(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
  modalT('💳 Confirmar recebimento — '+a.serv,
  '<div class="kv"><span>Valor</span><b>'+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz</b></div>'+
@@ -3770,13 +3801,106 @@ function toggleNotifs(e){if(e)e.stopPropagation();$('#uMenu').classList.add('hid
  requestAnimationFrame(function(){p.scrollTop=0;});}
 
 /* Item 2b — notificação com linkUid abre a mensagem do novo inscrito */
+/* ============================================================
+   NOTIFICAÇÕES COM NAVEGAÇÃO DIRECTA (FASE FINAL — Funcionalidade D)
+   Modelo: { id, userId, text, tipo, at, read, linkScreen (targetRoute),
+             linkEntity (targetId), linkUid (conversa chat) }
+   Ao clicar: 1) marca como lida · 2) resolve o destino · 3) valida
+   autorização via go() · 4) carrega o conteúdo · 5) destino
+   inexistente → mensagem clara, nunca página morta.
+   ============================================================ */
+var vegPendingEntity=null;
+function vegNotifMarkRead(n){n.read=true;n.lida=true;saveDB();setTimeout(renderBadges,300);}
+function vegNotifOpen(nid){const u=currentUser();if(!u)return;
+ const n=db.notifs.find(x=>x.id===nid);
+ if(!n){toast('Notificação já não está disponível.','er');return;}
+ vegNotifMarkRead(n);
+ const p=$('#nPanel');if(p)p.classList.add('hidden');
+ if(n.linkUid){vegMsgFromNotif(n.linkUid);return;}
+ if(n.linkScreen){
+   const route=String(n.linkScreen).replace(/[^a-z0-9_-]/gi,'');
+   const dest=document.querySelector('nav a[data-s="'+route+'"]');
+   if(!dest){toast('Destino indisponível neste perfil. Contacte o atendimento VEG.','er');return;}
+   if(n.linkEntity&&!vegEntityExists(n.targetType||'',n.linkEntity)){
+     toast('⚠️ O conteúdo já não existe ou foi removido.','er');
+   }
+   vegPendingEntity={screen:route,targetType:n.targetType||'',targetId:n.linkEntity||''};
+   go(route);
+   return;
+ }
+}
+function vegEntityExists(t,id){id=String(id||'');if(!id)return true;
+ const map={pedido:'orders',agendamento:'appts',proposta:'quotes',orcamento:'quotes',
+            pagamento:'payments',oportunidade:'opps',parceiro:'partners',encomenda:'orders',
+            lead:'leads',servico:'products',empresa:'businesses',documento:'docs',objectivo:'objectives'};
+ const key=map[t];if(!key||!db[key])return true;
+ return db[key].some(x=>String(x.id)===id);}
+
+/* ============ CONSUMO DE DESTINO PENDENTE (chamado no fim de go()) ============ */
+function vegConsumePending(screen){
+ const p=vegPendingEntity;
+ if(!p||p.screen!==screen)return;
+ vegPendingEntity=null;
+ const id=String(p.targetId||'');
+ if(!id)return;
+ /* ---- AGENDA ---- */
+ if(screen==='agenda'){
+   const a=db.appts.find(x=>String(x.id)===id);
+   if(!a){toast('Este agendamento já não existe ou foi removido.','er');return;}
+   if(typeof apptOpen==='function'){apptOpen(id);return;}
+   if(typeof showAppt==='function'){showAppt(id);return;}
+   if(typeof openAppt==='function'){openAppt(id);return;}
+   const row=document.querySelector('[data-appt="'+id+'"]');
+   if(row){row.scrollIntoView({behavior:'smooth',block:'center'});
+     row.style.outline='2px solid #C9A227';row.style.borderRadius='8px';
+     setTimeout(function(){row.style.outline='';},2600);}
+   toast('📅 '+a.serv+' · '+(a.date||'')+' '+(a.time||''),'ok');
+   return;
+ }
+ /* ---- PROPOSTAS / ORÇAMENTOS ---- */
+ if(screen==='propostas'||screen==='orcamentos'||screen==='orcamento'){
+   const q=(db.quotes||[]).find(x=>String(x.id)===id);
+   if(!q){toast('Esta proposta/orçamento já não existe ou foi removida.','er');return;}
+   if(typeof quoteOpen==='function'){quoteOpen(id);return;}
+   if(typeof showQuote==='function'){showQuote(id);return;}
+   if(typeof openQuote==='function'){openQuote(id);return;}
+   if(typeof propostaOpen==='function'){propostaOpen(id);return;}
+   const row2=document.querySelector('[data-quote="'+id+'"],[data-orcamento="'+id+'"]');
+   if(row2){row2.scrollIntoView({behavior:'smooth',block:'center'});
+     row2.style.outline='2px solid #C9A227';row2.style.borderRadius='8px';
+     setTimeout(function(){row2.style.outline='';},2600);}
+   const estado=q.status||(q.estado||'');
+   toast('📄 '+(q.titulo||q.servico||q.title||'Proposta')+(estado?' · '+estado:'')+
+         (q.valor||q.amount?' · '+fmtKz(Number(q.valor||q.amount)):''),'ok');
+   return;
+ }
+ /* ---- PEDIDOS / ENCOMENDAS ---- */
+ if(screen==='pedidos'||screen==='encomendas'||screen==='pedido'){
+   const o=(db.orders||[]).find(x=>String(x.id)===id);
+   if(!o){toast('Este pedido já não existe ou foi removido.','er');return;}
+   if(typeof orderOpen==='function'){orderOpen(id);return;}
+   if(typeof showOrder==='function'){showOrder(id);return;}
+   if(typeof openOrder==='function'){openOrder(id);return;}
+   if(typeof pedidoOpen==='function'){pedidoOpen(id);return;}
+   const row3=document.querySelector('[data-order="'+id+'"],[data-pedido="'+id+'"]');
+   if(row3){row3.scrollIntoView({behavior:'smooth',block:'center'});
+     row3.style.outline='2px solid #C9A227';row3.style.borderRadius='8px';
+     setTimeout(function(){row3.style.outline='';},2600);}
+   toast('🛒 Pedido '+(o.code||o.codigo||id)+' · '+(o.status||o.estado||'')+
+         (o.total?' · '+fmtKz(Number(o.total)):''),'ok');
+   return;
+ }
+}
+
 function renderNotifs(){const u=currentUser();
  const list=u?db.notifs.filter(n=>n.userId===u.id):(db.notifs.filter(n=>n.userId==='__all__'));
- $('#nList').innerHTML=list.length?list.slice(0,30).map(n=>
-  '<div class="notif-item" style="cursor:'+((n.linkUid||n.linkScreen)?'pointer':'default')+';'+(n.read?'':'background:#FBF6E7')+'"'+
-  (n.linkUid?' onclick="vegMsgFromNotif('+JSON.stringify(n.linkUid)+')"':'')+'>'+
-  esc(n.text)+'<br><small>'+new Date(n.at).toLocaleString('pt-AO')+'</small>'+
-  (n.linkScreen?' <button class="btn sm" onclick="event.stopPropagation();go(\''+String(n.linkScreen).replace(/[^a-z0-9_-]/gi,'')+'\')">Ver →</button>':'')+'</div>').join('')
+ $('#nList').innerHTML=list.length?list.slice(0,30).map(n=>{
+  const hasDest=!!(n.linkUid||n.linkScreen);
+  const btn=n.linkScreen?(n.linkEntity?' <button class="btn sm" onclick="event.stopPropagation();vegNotifOpen('+JSON.stringify(n.id)+')">Ver registo →</button>'
+                                       :' <button class="btn sm" onclick="event.stopPropagation();vegNotifOpen('+JSON.stringify(n.id)+')">Ver →</button>'):'';
+  return '<div class="notif-item" style="cursor:'+(hasDest?'pointer':'default')+';'+(n.read?'':'background:#FBF6E7')+'"'+
+  (hasDest?' onclick="vegNotifOpen('+JSON.stringify(n.id)+')"':'')+'>'+
+  esc(n.text)+'<br><small>'+new Date(n.at).toLocaleString('pt-AO')+'</small>'+btn+'</div>';}).join('')
   :'<div class="empty">Sem notificações.</div>';
  if(u){db.notifs.forEach(n=>{if(n.userId===u.id)n.read=true;});saveDB();setTimeout(renderBadges,400);}}
 function vegMsgFromNotif(uid2){const t=db.users.find(x=>x.id===uid2);
