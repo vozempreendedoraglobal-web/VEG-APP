@@ -1245,7 +1245,7 @@ function defaultDB(){return {
  opportunities:[]   /* FASE 7 — Bloco 1 (P6) · Bloco 2 (P10) */
 };}
 function loadDB(){try{db=JSON.parse(localStorage.getItem(DB_KEY));}catch(e){db=null;}if(!db||!db.users){db=defaultDB();saveDB();}}
-function saveDB(){localStorage.setItem(DB_KEY,JSON.stringify(db));try{if(typeof VEG_SYNC!=='undefined')VEG_SYNC.onLocalSave();}catch(e){}}
+function saveDB(){try{localStorage.setItem(DB_KEY,JSON.stringify(db));}catch(e){}try{if(typeof VEG_SYNC!=='undefined')VEG_SYNC.onLocalSave();}catch(e){}}
 loadDB();
 /* FASE 1: rede de parceiros recomeça vazia — remove parceiros-semente antigos */
 if(Array.isArray(db.partners)){db.partners=db.partners.filter(p=>!['pt1','pt2','pt3'].includes(p.id));saveDB();}
@@ -1256,7 +1256,7 @@ try{checkReminders();}catch(e){}
 if(!db.settlements)db.settlements=[];
 /* FASE 2: expiração automática de acordos de parceria */
 const _today=new Date().toISOString().slice(0,10);
-db.partners.forEach(p=>{if(p.status==='ativo'&&p.validUntil&&p.validUntil<_today){p.status='expirado';p.verified=false;if(p.userId)notify(p.userId,'⌛ O acordo de parceria expirou. Contacte a VEG para renovação.');logAction('Parceria expirada (automático)',p.name);}});
+db.partners.forEach(p=>{if(p.status==='ativo'&&p.validUntil&&p.validUntil<_today){p.status='expirado';p.verified=false;if(p.userId)notify(p.userId,'⌛ O acordo de parceria expirou. Contacte a VEG para renovação.',{screen:'parceiros'});logAction('Parceria expirada (automático)',p.name);}});
 if(!db.wallets){db.wallets={};}
 if(!db.indications){db.indications=[];}
 if(!db.chats){db.chats=[];}
@@ -1282,7 +1282,7 @@ function currentUser(){return db.session?db.users.find(u=>u.id===db.session.uid)
 function role(){const u=currentUser();return u?u.role:'visitante';}
 function isAdmin(){const r=role();return r==='admin'||r==='superadmin';}
 function requireLogin(){if(currentUser())return true;toast('🔐 Inicie sessão ou crie uma conta para continuar.','er');authTab('login');$('#auth').classList.remove('hidden');$('#shell').classList.add('hidden');return false;}
-function notify(userId,text,id){if(!userId)return;db.notifs.unshift({id:id||uid(),userId,text,at:Date.now(),read:false});saveDB();renderBadges();}
+function notify(userId,text,id,meta){if(!userId)return;const n={id:id||uid(),userId,text,at:Date.now(),read:false};if(meta){if(meta.screen)n.linkScreen=meta.screen;if(meta.entity)n.linkEntity=meta.entity;if(meta.ttype)n.targetType=meta.ttype;}db.notifs.unshift(n);saveDB();renderBadges();}
 /* Garantia server-side (Fase 6): regista a notificação directamente no
    backend, para que chegue ao utilizador mesmo que o push local do admin
    falhe. Idempotente: usa o MESMO id da notificação local (upsert por id). */
@@ -2060,7 +2060,7 @@ function adCreditUser(){
  vegCreditWallet(u,amount,'Kz','ADM-'+uid(),'Crédito manual: '+reason);
  auditLog('credito_manual',u.email+' ('+u.name+')',fmtMoney(before,'Kz'),fmtMoney(w.balance,'Kz'),reason);
  const nid=uid();
- notify(u.id,'💰 Foi creditado '+fmtMoney(amount,'Kz')+' na sua conta. Motivo: '+reason,nid);
+ notify(u.id,'💰 Foi creditado '+fmtMoney(amount,'Kz')+' na sua conta. Motivo: '+reason,nid,{screen:'saldo'});
  vegNotifyRemote(u.id,'💰 Foi creditado '+fmtMoney(amount,'Kz')+' na sua conta. Motivo: '+reason,nid);
  logAction('Crédito manual de saldo',u.email+' +'+fmtMoney(amount,'Kz'));saveDB();toast('Saldo creditado.','ok');adShowUser();}
 function adAdjustUser(){
@@ -2075,7 +2075,7 @@ function adAdjustUser(){
  const op={id:uid(),ref:'AJUSTE-'+uid(),at:Date.now(),userId:u.id,userName:u.name,service:'ajuste_admin',description:'Correcção manual: '+reason,type:'adjust',amount:Math.round((w.balance-before)*100)/100,balanceBefore:before,balanceAfter:w.balance,status:'confirmado'};
  w.ledger.unshift(op);if(!db.ledger)db.ledger=[];db.ledger.unshift(op);
  auditLog('ajuste_saldo',u.email+' ('+u.name+')',fmtMoney(before,'Kz'),fmtMoney(w.balance,'Kz'),reason);
- notify(u.id,'⚠️ O seu saldo foi corrigido para '+fmtMoney(w.balance,'Kz')+'. Motivo: '+reason);
+ notify(u.id,'⚠️ O seu saldo foi corrigido para '+fmtMoney(w.balance,'Kz')+'. Motivo: '+reason,{screen:'saldo'});
  logAction('Correcção de saldo',u.email);saveDB();toast('Saldo corrigido com auditoria.','ok');adShowUser();}
 function adBlockUser(block){
  if(!isAdmin())return;
@@ -2084,7 +2084,7 @@ function adBlockUser(block){
  if(block&&!reason.trim()){toast('Motivo obrigatório para bloquear.','er');return;}
  const w=ensureWallet(u);w.blocked=!!block;
  auditLog(block?'bloqueio_saldo':'desbloqueio_saldo',u.email+' ('+u.name+')',block?'activo':'bloqueado',block?'bloqueado':'activo',reason);
- notify(u.id,(block?'🔒 A utilização do seu saldo foi bloqueada. ':'🔓 A utilização do seu saldo foi desbloqueada.')+reason);
+ notify(u.id,(block?'🔒 A utilização do seu saldo foi bloqueada. ':'🔓 A utilização do seu saldo foi desbloqueada.')+reason,{screen:'saldo'});
  logAction(block?'Saldo bloqueado':'Saldo desbloqueado',u.email);saveDB();toast(block?'Utilização bloqueada.':'Utilização desbloqueada.','ok');adShowUser();}
 
 /* ================= MEUS OBJECTIVOS & MEU INVESTIMENTO (FASE F) =================
@@ -2121,7 +2121,7 @@ function objProg(o,u){
 }
 function renderObjetivos(){const u=currentUser();if(!u)return;
  const list=(db.objectives||[]).filter(function(o){return o.userId===u.id;});
- $('#objList').innerHTML=list.length?list.map(function(o){const cur=objProg(o,u);const pct=Math.min(100,Math.round(cur/o.target*100));const inv=objInvest(o,u.id);const tf=OBJ_TYPES_F.find(function(t){return t[0]===o.type;});if(pct>=50&&!o.n50){o.n50=true;notify(u.id,'🎯 Objectivo a meio: «'+o.title+'» — '+cur+'/'+o.target+' ('+pct+'%).');saveDB();}if(pct>=100&&!o.n100){o.n100=true;notify(u.id,'🏆 Objectivo concluído: «'+o.title+'» — meta de '+o.target+' atingida!');saveDB();}const tname=tf?tf[1]:o.type;const done=cur>=o.target;const expired=Date.now()>o.start+o.period*86400000;
+ $('#objList').innerHTML=list.length?list.map(function(o){const cur=objProg(o,u);const pct=Math.min(100,Math.round(cur/o.target*100));const inv=objInvest(o,u.id);const tf=OBJ_TYPES_F.find(function(t){return t[0]===o.type;});if(pct>=50&&!o.n50){o.n50=true;notify(u.id,'🎯 Objectivo a meio: «'+o.title+'» — '+cur+'/'+o.target+' ('+pct+'%).',{screen:'objetivos'});saveDB();}if(pct>=100&&!o.n100){o.n100=true;notify(u.id,'🏆 Objectivo concluído: «'+o.title+'» — meta de '+o.target+' atingida!',{screen:'objetivos'});saveDB();}const tname=tf?tf[1]:o.type;const done=cur>=o.target;const expired=Date.now()>o.start+o.period*86400000;
   return '<div style="border:1px solid var(--bdr,#333);border-radius:10px;padding:12px;margin-top:10px"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>'+esc(o.title)+'</b><span class="bdg '+(done?'b-g':expired?'b-r':'b-p')+'">'+(done?'CONCLUÍDO':expired?'EXPIRADO':'ATIVO')+'</span></div>'+
   '<div style="color:var(--mut);font-size:13px;margin-top:4px">'+esc(tname)+' · meta '+o.target+' · período '+o.period+' dia(s) · início '+dstr(o.start)+'</div>'+
   '<div style="background:var(--soft,#333);border-radius:8px;height:10px;margin:10px 0 6px"><div style="background:var(--gold);height:10px;border-radius:8px;width:'+pct+'%"></div></div>'+
@@ -2386,7 +2386,7 @@ function enterAsVisitor(){db.session=null;logAction('Acesso como visitante','-')
 function doLogout(){try{if(db.session&&db.session.token&&typeof VEG_API!=='undefined')VEG_API.post('authLogout',{});}catch(e){}logAction('Logout',currentUser()?currentUser().email:'-');db.session=null;adminUnlocked=false;scrHistory.length=0;saveDB();$('#liContacto').value='';$('#liSenha').value='';$('#shell').classList.add('hidden');$('#auth').classList.remove('hidden');}
 
 /* ================= SHELL / NAV ================= */
-function enterApp(){$('#auth').classList.add('hidden');$('#shell').classList.remove('hidden');document.body.classList.toggle('is-admin',isAdmin());scrHistory.length=0;updNavBtns();const u=currentUser();$('#uName').textContent=u?u.name.split(' ')[0]:'Visitante';$('#uAv').innerHTML=u&&u.photo?'<img src="'+u.photo+'">':esc((u?u.name:'V')[0].toUpperCase());$('#umNome').textContent=u?u.name:'Visitante';$('#umMail').textContent=u?u.email:'Sessão pública';$('#umRole').textContent=u?ROLE_NAMES[u.role]:'';fillProvinces('#bzProv');fillProvinces('#sqProv');fillProvinces('#cpProv');fillProvinces('#ptProv');fillProvinces('#pfProvIn');fillProvinces('#prProv');fillProvinces('#vqProv');fillProvinces('#vmProv');fillProvinces('#oppProv');applyNavRoles();go('inicio');renderAll();}
+function enterApp(){try{var _u0=(typeof currentUser==='function')?currentUser():null;if(_u0){var _pk=localStorage.getItem('vegapp_photo_'+_u0.id);if(_pk&&!_u0.photo){_u0.photo=_pk;try{saveDB();}catch(e){}}}}catch(e){}$('#auth').classList.add('hidden');$('#shell').classList.remove('hidden');document.body.classList.toggle('is-admin',isAdmin());scrHistory.length=0;updNavBtns();const u=currentUser();$('#uName').textContent=u?u.name.split(' ')[0]:'Visitante';$('#uAv').innerHTML=u&&u.photo?'<img src="'+u.photo+'">':esc((u?u.name:'V')[0].toUpperCase());$('#umNome').textContent=u?u.name:'Visitante';$('#umMail').textContent=u?u.email:'Sessão pública';$('#umRole').textContent=u?ROLE_NAMES[u.role]:'';fillProvinces('#bzProv');fillProvinces('#sqProv');fillProvinces('#cpProv');fillProvinces('#ptProv');fillProvinces('#pfProvIn');fillProvinces('#prProv');fillProvinces('#vqProv');fillProvinces('#vmProv');fillProvinces('#oppProv');applyNavRoles();go('inicio');renderAll();}
 function applyNavRoles(){const r=role();$$('nav a[data-s]').forEach(a=>{const min=a.dataset.min;let show=true;if(min==='user'&&r==='visitante')show=false;if(min==='admin'&&!isAdmin())show=false;if(min==='staff'&&!(isAdmin()||role()==='staff'))show=false;a.style.display=show?'flex':'none';});}
 function go(s){const a=document.querySelector('nav a[data-s="'+s+'"]');if(!a)return;if(a.dataset.min==='user'&&!currentUser()){if(!requireLogin())return;}if(a.dataset.min==='admin'){if(!isAdmin()){toast('⛔ Acesso restrito ao VEG ADMIN.','er');logAction('Tentativa de acesso indevido ao VEG ADMIN',s);return;}if(!adminUnlocked){adminGate(s);return;}}
  if(a.dataset.min==='staff'&&!(isAdmin()||role()==='staff')){toast('⛔ Área reservada à equipa interna VEG.','er');logAction('Tentativa de acesso ao Chat Equipa',s);return;}
@@ -2468,8 +2468,8 @@ function saveBusiness(e){e.preventDefault();if(!requireLogin())return;if(!wallet
  const data={name:$('#bzNome').value.trim(),nif:$('#bzNif').value.trim(),desc:$('#bzDesc').value.trim(),cat:$('#bzCat').value,province:$('#bzProv').value,city:$('#bzCid').value.trim(),address:$('#bzEnd').value.trim(),hor:$('#bzHor').value.trim(),whatsapp:$('#bzWpp').value.trim(),email:$('#bzMail').value.trim(),web:$('#bzWeb').value.trim(),
   /* FASE 7 — Bloco 1 (P5): perfil empresarial alargado */
   tradeName:$('#bzTrade').value.trim(),sector:$('#bzSector').value,documents:$('#bzDocs').value.trim(),certifications:$('#bzCerts').value.trim(),portfolio:$('#bzPort').value.trim(),visibility:$('#bzVis').value};
- fileToData($('#bzLogo').files[0],logo=>{if(b){/* alterar nome/NIF de empresa verificada exige nova verificação */const crit=(b.name!==data.name)||((b.nif||'')!==data.nif);Object.assign(b,data);if(crit&&b.verificationStatus==='verificada'){b.verificationStatus='pendente';b.verificationReason='Dados de identificação alterados — nova verificação necessária.';notify(u.id,'🔍 Os dados de identificação da empresa foram alterados — o perfil volta a aguardar verificação VEG.');}}else{b={id:uid(),userId:u.id,logo:'',active:true,verificationStatus:'pendente',...data};db.businesses.push(b);}if(logo)b.logo=logo;
- if(u.role==='user'){u.role='business';notify(u.id,'🎉 Perfil empresarial activado! Pode publicar produtos, receber pedidos e criar campanhas.');}
+ fileToData($('#bzLogo').files[0],logo=>{if(b){/* alterar nome/NIF de empresa verificada exige nova verificação */const crit=(b.name!==data.name)||((b.nif||'')!==data.nif);Object.assign(b,data);if(crit&&b.verificationStatus==='verificada'){b.verificationStatus='pendente';b.verificationReason='Dados de identificação alterados — nova verificação necessária.';notify(u.id,'🔍 Os dados de identificação da empresa foram alterados — o perfil volta a aguardar verificação VEG.',{screen:'negocio'});}}else{b={id:uid(),userId:u.id,logo:'',active:true,verificationStatus:'pendente',...data};db.businesses.push(b);}if(logo)b.logo=logo;
+ if(u.role==='user'){u.role='business';notify(u.id,'🎉 Perfil empresarial activado! Pode publicar produtos, receber pedidos e criar campanhas.',{screen:'negocio'});}
  logAction('Perfil empresarial guardado',b.name);pushData({tipo:'perfil_empresarial',...b});saveDB();enterApp();toast('Perfil empresarial guardado.','ok');});}
 function toggleBizActive(){const b=myBiz();if(!b)return;b.active=!b.active;logAction(b.active?'Reactivação':'Desactivação de perfil empresarial',b.name);saveDB();renderNegocio();toast(b.active?'Perfil reactivado.':'Perfil desactivado (oculto do market).','ok');}
 function addProduct(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();if(!myBiz()){toast('Crie primeiro o perfil empresarial.','er');return;}
@@ -2495,7 +2495,7 @@ function renderSolucoes(){$('#eixosGrid').innerHTML=EIXOS.map(e=>'<div class="ei
 function showEixo(n){const e=EIXOS[n-1];modalT('Eixo '+n+' — '+e.t,'<p style="font-size:.86rem;color:var(--mut);line-height:1.8;margin-bottom:14px"><b>Actividades:</b><br>'+esc(e.a)+'</p><button class="btn btn-gold" onclick="this.closest(\'.mback\').remove();prefillSolic('+n+')">📨 Solicitar solução neste eixo</button>');}
 function submitSolic(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();const code='SOL-'+String(db.counters.sol++).padStart(5,'0');
  db.sols.push({id:uid(),code,userId:u.id,eixo:$('#sqEixo').value,serv:$('#sqServ').value.trim(),province:$('#sqProv').value,phone:$('#sqTel').value.trim(),desc:$('#sqDesc').value.trim(),status:'Recebido',created:Date.now()});
- notify(u.id,'✅ A sua solicitação foi recebida com sucesso pela equipa VEG. Em conformidade com os critérios comerciais vigentes, os nossos técnicos irão elaborar o orçamento adequado, com base na rede de parceiros credenciada, e entrarão em contacto consigo através do WhatsApp ou do e-mail indicado. A confirmação formal ficará igualmente disponível no seu Escritório Virtual. A VEG agradece a sua confiança.');
+ notify(u.id,'✅ A sua solicitação foi recebida com sucesso pela equipa VEG. Em conformidade com os critérios comerciais vigentes, os nossos técnicos irão elaborar o orçamento adequado, com base na rede de parceiros credenciada, e entrarão em contacto consigo através do WhatsApp ou do e-mail indicado. A confirmação formal ficará igualmente disponível no seu Escritório Virtual. A VEG agradece a sua confiança.',{screen:'solucoes'});
  db.users.filter(x=>x.role==='admin'||x.role==='superadmin').forEach(a=>db.notifs.unshift({id:uid(),userId:a.id,text:'📋 Nova solicitação Soluções VEG: '+($('#sqEixo')?$('#sqEixo').value:'—')+' ('+($('#sqProv')&&$('#sqProv').value||'—')+') — '+u.name+'. Elabore o orçamento e responda via WhatsApp/e-mail.',at:Date.now(),read:false}));
  logAction('Solicitação VEG criada',code);pushData({tipo:'solicitacao',codigo:code,eixo:$('#sqEixo').value,desc:$('#sqDesc').value,contacto:$('#sqTel').value});
  saveDB();e.target.reset();renderSolucoes();renderInicio();toast('Solicitação '+code+' enviada! Acompanhe no histórico.','ok');}
@@ -2534,7 +2534,7 @@ function livePreview(){const t=$('#dcTipo').value;if(!t)return;const u=currentUs
  const body=($('#dcBody').value||'').replace(/\n/g,'<br>');
  $('#docPrev').innerHTML=head+'<h3 style="font-family:Georgia,serif;color:#0B1B33;margin-bottom:10px">'+esc(t)+( $('#dcAssunto').value?' — '+esc($('#dcAssunto').value):'')+'</h3><p>'+body+'</p>'+(t.includes('Contrato')||t.includes('Proposta')?'<p style="margin-top:26px">__________________________________<br><b>'+esc($('#dcAss').value||(u?u.name:''))+'</b><br><small>VEG — Voz Empreendedora Global</small></p>':'');}
 function genDoc(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();lastDoc={id:uid(),userId:u.id,type:$('#dcTipo').value,dest:$('#dcDest').value,assunto:$('#dcAssunto').value,body:$('#dcBody').value,created:Date.now()};
- db.docs.unshift(lastDoc);notify(u.id,'📄 Documento «'+lastDoc.type+'» criado e guardado na biblioteca.');logAction('Documento gerado',lastDoc.type);pushData({tipo:'documento',doc:$('#dcTipo').value,dest:$('#dcDest').value});saveDB();renderDocHist();livePreview();toast('Documento gerado e guardado.','ok');}
+ db.docs.unshift(lastDoc);notify(u.id,'📄 Documento «'+lastDoc.type+'» criado e guardado na biblioteca.',{screen:'documentos'});logAction('Documento gerado',lastDoc.type);pushData({tipo:'documento',doc:$('#dcTipo').value,dest:$('#dcDest').value});saveDB();renderDocHist();livePreview();toast('Documento gerado e guardado.','ok');}
 function renderDocHist(){const u=currentUser();if(!u)return;const rows=db.docs.filter(d=>d.userId===u.id).map(d=>'<tr><td>'+esc(d.type)+'</td><td>'+esc(d.dest)+'</td><td>'+dstr(d.created)+'</td><td><button class="btn btn-blue sm" onclick="loadDoc(\''+d.id+'\')">Abrir</button> <button class="btn btn-green sm" onclick="loadDoc(\''+d.id+'\');shareDocWpp()">WhatsApp</button></td></tr>').join('');
  $('#docHist').innerHTML='<tr><th>Documento</th><th>Destinatário</th><th>Data</th><th>Acções</th></tr>'+(rows||'<tr><td colspan="4" style="text-align:center;color:var(--mut)">Sem documentos guardados.</td></tr>');}
 function loadDoc(id){const d=db.docs.find(x=>x.id===id);if(!d)return;$('#dcTipo').value=d.type;$('#dcDest').value=d.dest;$('#dcAssunto').value=d.assunto;$('#dcBody').value=d.body;lastDoc=d;livePreview();toast('Documento carregado.','ok');}
@@ -2550,7 +2550,7 @@ function renderCRM(){const u=currentUser();if(!u)return;const mine=db.leads.filt
  return '<div class="pcol"><h5>'+s+' ('+mine.filter(l=>l.stage===s).length+')</h5>'+(cards||'<div style="font-size:.72rem;color:#9AA7BC;text-align:center;padding:8px 0">— vazio —</div>')+'</div>';}).join('');}
 function addLead(e){e.preventDefault();if(!requireLogin())return;if(!walletGuard())return;const u=currentUser();
  db.leads.push({id:uid(),userId:u.id,name:$('#ldNome').value.trim(),phone:$('#ldTel').value.trim(),source:$('#ldFonte').value,interest:$('#ldInt').value.trim(),value:+$('#ldValor').value||0,notes:$('#ldNota').value.trim(),stage:'Novo',created:Date.now(),history:[{at:Date.now(),txt:'Lead criado (origem: '+$('#ldFonte').value+')'}]});
- notify(u.id,'🤝 Novo lead registado: '+$('#ldNome').value);logAction('Lead criado',$('#ldNome').value);pushData({tipo:'lead',nome:$('#ldNome').value,fonte:$('#ldFonte').value});saveDB();e.target.reset();renderCRM();renderNegocio();toast('Lead adicionado ao pipeline.','ok');}
+ notify(u.id,'🤝 Novo lead registado: '+$('#ldNome').value,{screen:'crm'});logAction('Lead criado',$('#ldNome').value);pushData({tipo:'lead',nome:$('#ldNome').value,fonte:$('#ldFonte').value});saveDB();e.target.reset();renderCRM();renderNegocio();toast('Lead adicionado ao pipeline.','ok');}
 function leadModal(id){const l=db.leads.find(x=>x.id===id);if(!l)return;const i=CRM_STAGES.indexOf(l.stage);
  modalT('Lead — '+l.name,'<div class="kv"><span>Contacto</span><b>'+esc(l.phone)+'</b></div><div class="kv"><span>Origem</span><b>'+esc(l.source)+'</b></div><div class="kv"><span>Interesse</span><b>'+esc(l.interest)+'</b></div><div class="kv"><span>Valor estimado</span><b>'+fmtKz(l.value)+'</b></div><div class="kv"><span>Estado actual</span><b>'+esc(l.stage)+'</b></div>'
  +'<div class="fld" style="margin-top:12px"><label>Nova observação</label><textarea id="ldObs2" rows="2" placeholder="Registar interacção..."></textarea></div>'
@@ -2559,19 +2559,20 @@ function leadModal(id){const l=db.leads.find(x=>x.id===id);if(!l)return;const i=
  +'<button class="btn btn-red sm" onclick="delLead(\''+id+'\')">🗑 Eliminar</button></div>'
  +'<h3 style="margin-top:14px;font-size:.85rem"><span class="dot"></span>Histórico</h3>'+l.history.map(h=>'<div style="font-size:.76rem;color:var(--mut);padding:5px 0;border-bottom:1px dashed var(--line)">'+new Date(h.at).toLocaleString('pt-AO')+' — '+esc(h.txt)+'</div>').join(''));}
 function moveLead(id,dir){const l=db.leads.find(x=>x.id===id);const i=CRM_STAGES.indexOf(l.stage);const n=CRM_STAGES[Math.min(CRM_STAGES.length-1,Math.max(0,i+dir))];if(n===l.stage)return;
- const obs=$('#ldObs2').value.trim();l.stage=n;l.history.push({at:Date.now(),txt:'Movido para «'+n+'»'+(obs?' — '+obs:'')});if(n==='Cliente')notify(l.userId?currentUser().id:'','🎉 Lead '+l.name+' convertido em CLIENTE!');
+ const obs=$('#ldObs2').value.trim();l.stage=n;l.history.push({at:Date.now(),txt:'Movido para «'+n+'»'+(obs?' — '+obs:'')});if(n==='Cliente')notify(l.userId?currentUser().id:'','🎉 Lead '+l.name+' convertido em CLIENTE!',{screen:'crm'});
  logAction('Lead movido para '+n,l.name);saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderCRM();toast('Lead movido para «'+n+'».','ok');}
 function delLead(id){if(!confirm('Eliminar este lead?'))return;db.leads=db.leads.filter(l=>l.id!==id);saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderCRM();toast('Lead eliminado.','ok');}
 function leadToDoc(id){const l=db.leads.find(x=>x.id===id);document.querySelectorAll('.mback').forEach(m=>m.remove());go('documentos');$('#dcTipo').value='Proposta Comercial';$('#dcDest').value=l.name;$('#dcAssunto').value=l.interest;$('#dcValor').value=l.value||'';docTemplate();toast('Proposta pré-preenchida a partir do lead.','ok');}
 
 /* ================= MENSAGENS ================= */
+function delBizMsg(id){const u=currentUser();if(!u)return;const m=db.msgs.find(x=>x.id===id);if(!m)return;const b=m.toBizId?db.businesses.find(x=>x.id===m.toBizId):null;if(!(b&&b.userId===u.id)&&role()!=='admin'){toast('Só o destinatário ou o VEG ADMIN podem eliminar.','er');return;}db.msgs=db.msgs.filter(x=>x.id!==id);saveDB();renderMsgs();toast('Mensagem eliminada.','ok');}
 function renderMsgs(){const u=currentUser();if(!u)return;const b=myBiz();const rows=b?db.msgs.filter(m=>m.toBizId===b.id).map(m=>{const f=db.users.find(x=>x.id===m.fromUserId);const p=db.products.find(x=>x.id===m.productId);return '<tr><td>'+esc(f?f.name:'Utilizador')+'</td><td>'+esc(p?p.name:'—')+'</td><td>'+esc(m.text)+'</td><td>'+esc(f?f.phone:'')+'</td><td>'+dstr(m.at)+'</td><td>'+(m.read?'':'<span class="bdg b-n">Nova</span>')+' <button class="btn btn-green sm" onclick="window.open(\'https://wa.me/'+esc((f?f.phone:'+244933803862').replace(/\\D/g,''))+'\',\'_blank\')">💬 Responder</button></td></tr>';}).join(''):'';
- $('#msgTable').innerHTML='<tr><th>De</th><th>Sobre</th><th>Mensagem</th><th>Contacto</th><th>Data</th><th></th></tr>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--mut)">'+(b?'Sem mensagens recebidas.':'Active o perfil empresarial para receber mensagens do VEG Market.')+'</td></tr>');
+ $('#msgTable').innerHTML='<tr><th>De</th><th>Sobre</th><th>Mensagem</th><th>Contacto</th><th>Data</th><th></th></tr>'+(rows||'<tr><td colspan="6" style="text-align:center;color:var(--mut)">'+(b?'Sem mensagens recebidas.':'Active o perfil empresarial para receber mensagens do VEG Market.')+' <button class="btn sm" style="opacity:.75" onclick="delBizMsg(\''+m.id+'\')" title="Eliminar mensagem">🗑</button></td></tr>');
  if(b){db.msgs.forEach(m=>{if(m.toBizId===b.id)m.read=true;});saveDB();setTimeout(renderBadges,300);}}
 function askProduct(pid){if(!requireLogin())return;const p=db.products.find(x=>x.id===pid);const b=db.businesses.find(x=>x.id===p.bizId);
  modalT('Perguntar sobre: '+p.name,'<div class="fld"><label>A sua mensagem</label><textarea id="askTxt" rows="3">Olá! Vi «'+p.name+'» no VEG Market e gostaria de mais informações.</textarea></div><button class="btn btn-gold sm" onclick="sendAsk(\''+pid+'\',\''+(b?b.id:'')+'\')">📤 Enviar mensagem</button>');}
 function sendAsk(pid,bizId){const u=currentUser();db.msgs.push({id:uid(),fromUserId:u.id,toBizId:bizId,productId:pid,text:$('#askTxt').value.trim(),at:Date.now(),read:false});
- if(bizId){const b=db.businesses.find(x=>x.id===bizId);if(b)notify(b.userId,'💬 Nova mensagem sobre o seu anúncio no VEG Market.');}
+ if(bizId){const b=db.businesses.find(x=>x.id===bizId);if(b)notify(b.userId,'💬 Nova mensagem sobre o seu anúncio no VEG Market.',{screen:'mensagens'});}
  logAction('Mensagem enviada sobre produto',pid);saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());toast('Mensagem enviada.','ok');}
 
 /* ================= MARKET / ENCOMENDAS ================= */
@@ -2609,7 +2610,7 @@ async function checkout(){if(!walletGuard())return;const u=currentUser();const i
      (registerPayment) — o VEG ADMIN vê o pagamento centralmente e a
      confirmação é exclusiva do servidor (updatePaymentStatus). */
   try{if(vegToken())VEG_API.post('registerPayment',{payment:{id:_pay.id,ref:_pay.ref,concept:_pay.concept,valor:total,amount:total,method:_pay.method,orderId:order.id,orderCode:order.code},idempotencyKey:_pay.ref});}catch(e){}
-  notify(u.id,'📦 '+order.code+' registado! Estado: Recebido. Pagamento pendente de validação.');logAction('Encomenda criada',order.code);pushData({tipo:'encomenda',codigo:order.code,total:total,items:items.length});cart=[];saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderMarket();renderInicio();
+  notify(u.id,'📦 '+order.code+' registado! Estado: Recebido. Pagamento pendente de validação.',{screen:'financeiro'});logAction('Encomenda criada',order.code);pushData({tipo:'encomenda',codigo:order.code,total:total,items:items.length});cart=[];saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());renderMarket();renderInicio();
   modalT('Encomenda confirmada','<div style="text-align:center;padding:10px"><div style="font-size:3rem">📦</div><h3 style="color:var(--navy);margin:8px 0">'+esc(order.code)+'</h3><p style="font-size:.85rem;color:var(--mut)">Total: <b>'+fmtKz(order.total!=null?order.total:total)+'</b><br>Estado: <span class="bdg b-p">Recebido</span> → Em preparação → Enviado → Entregue<br><small>O stock foi debitado no servidor e o vendedor será notificado para confirmar.</small></p><button class="btn btn-gold sm" onclick="document.querySelectorAll(\'.mback\').forEach(m=>m.remove());go(\'financeiro\')">Ver no VEG Finance</button></div>');};
  try{
   /* CICLO 5 (sec. 13 do Prompt Mestre): chave de idempotência por checkout —
@@ -2643,7 +2644,7 @@ function createCampaign(e){e.preventDefault();if(!requireLogin())return;if(!wall
 }
 function createCampaignExec(e){const u=currentUser();
  db.camps.push({id:uid(),userId:u.id,name:$('#cpNome').value.trim(),obj:$('#cpObj').value,platform:$('#cpPlat').value,province:$('#cpProv').value,age:$('#cpIdade').value.trim(),budget:+$('#cpOrc').value,days:+$('#cpDias').value,start:$('#cpIni').value,desc:$('#cpDesc').value.trim(),status:'Pendente'});
- notify(u.id,'📣 Campanha «'+$('#cpNome').value+'» submetida para aprovação.');logAction('Campanha submetida',$('#cpNome').value);pushData({tipo:'campanha',nome:$('#cpNome').value,orcamento:$('#cpOrc').value});saveDB();e.target.reset();$('#cpOrc').value=db.cfg.campPrice;$('#cpDias').value=7;renderMarketing();toast('Campanha submetida para aprovação administrativa.','ok');}
+ notify(u.id,'📣 Campanha «'+$('#cpNome').value+'» submetida para aprovação.',{screen:'marketing'});logAction('Campanha submetida',$('#cpNome').value);pushData({tipo:'campanha',nome:$('#cpNome').value,orcamento:$('#cpOrc').value});saveDB();e.target.reset();$('#cpOrc').value=db.cfg.campPrice;$('#cpDias').value=7;renderMarketing();toast('Campanha submetida para aprovação administrativa.','ok');}
 
 /* ================= AGENDAMENTOS ================= */
 function pickAgenda(v){$('#agServ').value=v;document.querySelector('#agenda form').scrollIntoView({behavior:'smooth'});}
@@ -2707,10 +2708,10 @@ function setApptState(id,st){const a=db.appts.find(x=>x.id===id);if(!a)return;
  if(st==='concluido')settleAppt(a);
  if(['noshow','cancelado','rejeitado'].includes(st))refundAppt(a,reason);
  const msgs={em_validacao:'📋 O seu agendamento («'+a.serv+'») entrou em validação pela equipa VEG.',validado:'✔ O seu agendamento («'+a.serv+'») foi VALIDADO pela VEG.',rejeitado:'✖ O seu agendamento («'+a.serv+'») foi rejeitado: '+reason,encaminhado:'📤 O seu agendamento («'+a.serv+'») foi encaminhado ao parceiro: '+apptPartnerName(a)+'.',orcamentado:'💰 O parceiro enviou o orçamento para o agendamento «'+a.serv+'».',confirmado_cliente:'✔ O cliente confirmou o agendamento «'+a.serv+'».',confirmado_parceiro:'✔ O parceiro confirmou: tudo pronto para «'+a.serv+'» em '+a.date+' às '+a.time+'.',concluido:'🏁 O agendamento «'+a.serv+'» foi CONCLUÍDO. Avalie o serviço na plataforma!',cancelado:'✖ O agendamento «'+a.serv+'» foi cancelado: '+reason,expirado:'⌛ O agendamento «'+a.serv+'» expirou sem resposta do parceiro. A VEG irá reencaminhar.',reagendado:'📅 O agendamento «'+a.serv+'» foi reagendado para '+a.date+' às '+a.time+'.',noshow:'⚠ O agendamento «'+a.serv+'» foi marcado como «não compareceu».'};
- if(a.userId&&msgs[st])notify(a.userId,msgs[st]);
+ if(a.userId&&msgs[st])notify(a.userId,msgs[st],{screen:'agenda'});
  if(msgs[st])notifyApptEmail(a,msgs[st]);
  const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;
- if(pt&&pt.userId&&msgs[st]&&a.userId!==pt.userId)notify(pt.userId,msgs[st]);
+ if(pt&&pt.userId&&msgs[st]&&a.userId!==pt.userId)notify(pt.userId,msgs[st],{screen:'agenda'});
  logAction('Agendamento: '+(APPT_STATUS[a.status]||a.status)+' → '+(APPT_STATUS[st]||st)+(reason?' · '+reason.trim():''),a.serv);
  saveDB();adminTab('agendamentos');renderAgenda();toast('Estado actualizado: '+(APPT_STATUS[st]||st),'ok');}
 /* ===== FASE 4: Motor de orçamento, 3 níveis de confirmação, lembretes automáticos ===== */
@@ -2784,10 +2785,10 @@ function savePayAdmin(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
  a.pay={status:'pago',method:$('#pmMethod').value,ref:$('#pmRef').value.trim(),ts:Date.now(),amount:a.quote.amount};
  a.status='confirmado_parceiro';
  apptHist(a,'admin','Pagamento confirmado ('+a.pay.method+')',Number(a.quote.amount).toLocaleString('pt-PT')+' Kz');
- if(a.userId)notify(a.userId,'✅ Pagamento confirmado — Confirmação 2/3. O serviço «'+a.serv+'» está garantido para '+a.date+' às '+a.time+'.');
+ if(a.userId)notify(a.userId,'✅ Pagamento confirmado — Confirmação 2/3. O serviço «'+a.serv+'» está garantido para '+a.date+' às '+a.time+'.',{screen:'agenda'});
  notifyApptEmail(a,'A VEG confirmou o recebimento de '+Number(a.quote.amount).toLocaleString('pt-PT')+' Kz. O serviço está garantido.');
  const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;
- if(pt&&pt.userId&&pt.userId!==a.userId)notify(pt.userId,'✅ Serviço «'+a.serv+'» pago e garantido pela VEG. Data: '+a.date+' às '+a.time+'.');
+ if(pt&&pt.userId&&pt.userId!==a.userId)notify(pt.userId,'✅ Serviço «'+a.serv+'» pago e garantido pela VEG. Data: '+a.date+' às '+a.time+'.',{screen:'portal'});
  logAction('Pagamento confirmado (admin)',a.serv+' — '+a.quote.amount+' Kz · '+a.pay.method);
  pushData({tipo:'pagamento',servico:a.serv,valor:a.quote.amount,metodo:a.pay.method,ref:a.pay.ref||''});
  saveDB();document.querySelectorAll('.mback').forEach(m=>m.remove());adminTab('agendamentos');renderAgenda();toast('Pagamento confirmado — Confirmação 2/3.','ok');}
@@ -2796,13 +2797,13 @@ function settleAppt(a){if(!a.quote||!a.partnerId||!(a.pay&&a.pay.status==='pago'
  if(db.settlements.some(s=>s.apptId===a.id))return;
  const gross=a.quote.amount,com=Math.round(gross*VEG_COMMISSION),net=gross-com;
  db.settlements.push({id:uid(),apptId:a.id,partnerId:a.partnerId,partnerName:pt.name,serv:a.serv,gross:gross,commission:com,net:net,ts:Date.now(),status:'pendente'});
- if(pt.userId)notify(pt.userId,'📄 Liquidação gerada: «'+a.serv+'» — bruto '+gross.toLocaleString('pt-PT')+' Kz − comissão VEG 15% = líquido '+net.toLocaleString('pt-PT')+' Kz. A VEG irá pagar.');
+ if(pt.userId)notify(pt.userId,'📄 Liquidação gerada: «'+a.serv+'» — bruto '+gross.toLocaleString('pt-PT')+' Kz − comissão VEG 15% = líquido '+net.toLocaleString('pt-PT')+' Kz. A VEG irá pagar.',{screen:'portal'});
  pushData({tipo:'liquidacao',servico:a.serv,parceiro:pt.name,bruto:gross,comissao:com,liquido:net});
  logAction('Liquidação gerada',pt.name+' — líquido '+net+' Kz');}
 function refundAppt(a,reasonTxt){if(!a.pay||a.pay.status!=='pago'||!a.quote)return;const u=db.users.find(x=>x.id===a.userId);const amt=a.quote.amount;
  creditWalletRefund(u,amt,'Reembolso — agendamento '+a.serv);
  a.pay.status='reembolsado';apptHist(a,'sistema','Reembolso em carteira VEG Saldo',amt.toLocaleString('pt-PT')+' Kz'+(reasonTxt?' — '+reasonTxt:''));
- if(u)notify(u.id,'↩️ '+amt.toLocaleString('pt-PT')+' Kz creditados na sua carteira VEG Saldo (reembolso de «'+a.serv+'»).');
+ if(u)notify(u.id,'↩️ '+amt.toLocaleString('pt-PT')+' Kz creditados na sua carteira VEG Saldo (reembolso de «'+a.serv+'»).',{screen:'saldo'});
  notifyApptEmail(a,'O valor de '+amt.toLocaleString('pt-PT')+' Kz foi creditado na sua carteira VEG Saldo (reembolso). Disponível para futuros serviços.');
  logAction('Reembolso em carteira',a.serv+' — '+amt+' Kz');}
 function adSettlements(box,head){db.settlements=db.settlements||[];
@@ -2812,7 +2813,7 @@ function adSettlements(box,head){db.settlements=db.settlements||[];
  '<div class="notice">💰 <b>Modelo A:</b> o cliente paga à VEG; a VEG paga ao parceiro o valor <b>líquido (bruto − 15%)</b>. Liquidações geram-se automaticamente ao concluir um serviço pago. <b>A pagar agora: '+Number(pend).toLocaleString('pt-PT')+' Kz</b></div>'+
  '<div class="twrap"><table><tr><th>Parceiro / Serviço</th><th>Bruto</th><th>Comissão VEG</th><th>Líquido</th><th>Estado</th><th>Acção</th></tr>'+(rows||'<tr><td colspan="6" class="empty">Sem liquidações — conclua um serviço pago para gerar a primeira.</td></tr>')+'</table></div>';}
 function markSettled(id){const s=(db.settlements||[]).find(x=>x.id===id);if(!s)return;s.status='pago';s.paidAt=Date.now();
- const pt=db.partners.find(p=>p.id===s.partnerId);if(pt&&pt.userId)notify(pt.userId,'💸 A VEG pagou '+Number(s.net).toLocaleString('pt-PT')+' Kz — liquidação «'+s.serv+'». Obrigado pela parceria.');
+ const pt=db.partners.find(p=>p.id===s.partnerId);if(pt&&pt.userId)notify(pt.userId,'💸 A VEG pagou '+Number(s.net).toLocaleString('pt-PT')+' Kz — liquidação «'+s.serv+'». Obrigado pela parceria.',{screen:'portal'});
  logAction('Liquidação paga pela VEG',s.partnerName+' — '+s.net+' Kz');saveDB();adminTab('liquidacoes');toast('Liquidação marcada como paga.','ok');}
 
 function confirmLevel(a){if(a.status==='concluido')return 3;if(a.status==='confirmado_parceiro')return 2;if(a.status==='confirmado_cliente')return 1;return 0;}
@@ -2835,7 +2836,7 @@ function saveQuote(id){const a=db.appts.find(x=>x.id===id);if(!a)return;
  const _qi=db.quotes.findIndex(x=>x.id===_q.id);if(_qi>=0)db.quotes[_qi]=_q;else db.quotes.push(_q);
  try{if(vegToken())VEG_API.post('createQuote',{quote:_q});}catch(e){}
  apptHist(a,'parceiro','Orçamento enviado',Number(v).toLocaleString('pt-PT')+' Kz — válido até '+vl);
- if(a.userId)notify(a.userId,'💰 Recebeu um orçamento de '+Number(v).toLocaleString('pt-PT')+' Kz para «'+a.serv+'» (válido até '+vl+'). Aceite em Agendamentos → Ver orçamento.');
+ if(a.userId)notify(a.userId,'💰 Recebeu um orçamento de '+Number(v).toLocaleString('pt-PT')+' Kz para «'+a.serv+'» (válido até '+vl+'). Aceite em Agendamentos → Ver orçamento.',{screen:'agenda'});
  notifyApptEmail(a,'Recebeu um orçamento de '+Number(v).toLocaleString('pt-PT')+' Kz para o agendamento «'+a.serv+'», válido até '+vl+'. Entre na VEG APP → Agendamentos para aceitar ou recusar.');
  const pt=a.partnerId?db.partners.find(p=>p.id===a.partnerId):null;
  if(pt&&pt.userId&&pt.userId!==a.userId)notify(pt.userId,'💰 Orçamento de '+Number(v).toLocaleString('pt-PT')+' Kz enviado ao cliente para «'+a.serv+'».');
@@ -3025,8 +3026,8 @@ function renderPerfil(){const u=currentUser();if(!u)return;
  $('#pfAv').innerHTML=u.photo?'<img src="'+u.photo+'" style="width:100%;height:100%;object-fit:cover">':esc(u.name[0].toUpperCase());
  $('#pfNome').textContent=u.name;$('#pfMail').textContent=u.email+' · '+u.phone;$('#pfRole').textContent=ROLE_NAMES[u.role];const pv=$('#pfVegno');if(pv)pv.textContent=u.vegno||'—';renderTfaRow();
  if(document.activeElement!==$('#pfNomeIn')){$('#pfNomeIn').value=u.name;$('#pfProf').value=u.profession||'';$('#pfEmailIn').value=u.email;$('#pfTelIn').value=u.phone;$('#pfProvIn').value=u.province||'';$('#pfInt').value=u.interests||'';$('#pfIdade').value=u.idade||'';}renderVegIdCard(u);renderProForm(u);}
-function changePhoto(inp){fileToData(inp.files[0],d=>{if(d){const u=currentUser();if(!u)return;u.photo=d;saveDB();enterApp();logAction('Fotografia de perfil colocada/alterada','-');toast('📷 Fotografia de perfil actualizada.','ok');}});}
-function removePhoto(){const u=currentUser();if(!u)return;if(!u.photo){toast('Não tem fotografia para eliminar.','er');return;}if(!confirm('Eliminar a fotografia do seu perfil?'))return;u.photo='';saveDB();enterApp();logAction('Fotografia de perfil eliminada','-');toast('🗑 Fotografia eliminada.','ok');}
+function changePhoto(inp){fileToData(inp.files[0],d=>{if(d){const u=currentUser();if(!u)return;u.photo=d;try{localStorage.setItem('vegapp_photo_'+u.id,d);}catch(e){}saveDB();enterApp();logAction('Fotografia de perfil colocada/alterada','-');toast('📷 Fotografia de perfil actualizada.','ok');}});}
+function removePhoto(){const u=currentUser();if(!u)return;if(!u.photo){toast('Não tem fotografia para eliminar.','er');return;}if(!confirm('Eliminar a fotografia do seu perfil?'))return;u.photo='';try{localStorage.removeItem('vegapp_photo_'+u.id);}catch(e){}saveDB();enterApp();logAction('Fotografia de perfil eliminada','-');toast('🗑 Fotografia eliminada.','ok');}
 /* ================= FASE 7 — BLOCO 1: VEG ID + PERFIL PROFISSIONAL =================
    O VEG ID é a identidade central: uma conta, vários perfis (relações,
    não contas duplicadas — secção 32 do Prompt Mestre). */
@@ -3271,7 +3272,8 @@ function renderChat(){const u=currentUser();if(!u||!teamTier(u))return;const tea
  $('#chContacts').innerHTML=team.length?team.map(t=>{const unread=db.chats.filter(m=>m.toId===u.id&&m.fromId===t.id&&!m.read).length;return '<div class="kv" style="cursor:pointer" onclick="openChatWith(\''+t.id+'\')"><span>👤 '+esc(t.name)+'<br><small style="color:var(--mut)">'+ROLE_NAMES[t.role]+'</small></span><b>'+(unread?'<span class="bdg b-r">'+unread+' nova(s)</span>':'<span class="bdg b-grey">💬</span>')+'</b></div>';}).join(''):'<div class="empty"><div class="big">👥</div>Sem outros colaboradores registados nesta versão.</div>';
  renderThread();}
 function openChatWith(id){chWith=id;const t=db.users.find(x=>x.id===id);const wn=$('#chWithName');if(wn)wn.textContent=t?'— '+t.name:'';db.chats.forEach(m=>{if(m.toId===currentUser().id&&m.fromId===id)m.read=true;});saveDB();renderChat();}
-function renderThread(){const u=currentUser();const box=$('#chThread');if(!box)return;const msgs=chWith?db.chats.filter(m=>(m.fromId===u.id&&m.toId===chWith)||(m.fromId===chWith&&m.toId===u.id)):[];box.innerHTML=msgs.length?msgs.map(m=>{const mine=m.fromId===u.id;return '<div style="display:flex;justify-content:'+(mine?'flex-end':'flex-start')+';margin-bottom:8px"><div style="max-width:75%;background:'+(mine?'linear-gradient(135deg,#D4AF37,#B8860B)':'#ffffff')+';color:'+(mine?'#081226':'var(--txt)')+';border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:.82rem">'+(m.kind==='audio'?'<audio controls src="'+m.audio+'" style="max-width:220px;height:36px"></audio>':esc(m.text))+'<br><small style="opacity:.6;font-size:.62rem">'+new Date(m.at).toLocaleTimeString('pt-AO',{hour:'2-digit',minute:'2-digit'})+'</small></div></div>';}).join(''):'<div class="empty" style="padding:20px"><div class="big">💬</div>'+(chWith?'Sem mensagens ainda. Diga olá! 👋':'Seleccione um contacto da equipa para conversar.')+'</div>';box.scrollTop=box.scrollHeight;}
+function delChatMsg(id){const u=currentUser();if(!u)return;const m=db.chats.find(x=>x.id===id);if(!m)return;if(m.fromId!==u.id&&role()!=='admin'){toast('Só pode eliminar as suas mensagens.','er');return;}db.chats=db.chats.filter(x=>x.id!==id);saveDB();renderThread();toast('Mensagem eliminada.','ok');}
+function renderThread(){const u=currentUser();const box=$('#chThread');if(!box)return;const msgs=chWith?db.chats.filter(m=>(m.fromId===u.id&&m.toId===chWith)||(m.fromId===chWith&&m.toId===u.id)):[];box.innerHTML=msgs.length?msgs.map(m=>{const mine=m.fromId===u.id;return '<div style="display:flex;justify-content:'+(mine?'flex-end':'flex-start')+';margin-bottom:8px"><div style="max-width:75%;background:'+(mine?'linear-gradient(135deg,#D4AF37,#B8860B)':'#ffffff')+';color:'+(mine?'#081226':'var(--txt)')+';border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:.82rem">'+(m.kind==='audio'?'<audio controls src="'+m.audio+'" style="max-width:220px;height:36px"></audio>':esc(m.text))+'<br><small style="opacity:.6;font-size:.62rem">'+new Date(m.at).toLocaleTimeString('pt-AO',{hour:'2-digit',minute:'2-digit'})+'</small>'+(mine||role()==='admin'?'<div style="text-align:right;margin-top:2px"><span style="cursor:pointer;opacity:.6;font-size:.68rem" onclick="delChatMsg(\''+m.id+'\')" title="Eliminar mensagem">✕ eliminar</span></div>':'')+'</div></div>';}).join(''):'<div class="empty" style="padding:20px"><div class="big">💬</div>'+(chWith?'Sem mensagens ainda. Diga olá! 👋':'Seleccione um contacto da equipa para conversar.')+'</div>';box.scrollTop=box.scrollHeight;}
 function sendChatTxt(){const u=currentUser();if(!u||!chWith)return;const t=$('#chText').value.trim();if(!t)return;db.chats.push({id:uid(),fromId:u.id,toId:chWith,kind:'text',text:t,at:Date.now(),read:false});const tt=db.users.find(x=>x.id===chWith);notify(chWith,'💬 '+u.name+' (equipa VEG): '+t.slice(0,60));$('#chText').value='';logAction('Chat Equipa — mensagem',tt?tt.email:'-');saveDB();renderChat();}
 function toggleRec(){if(mediaRec&&mediaRec.state==='recording'){mediaRec.stop();return;}const u=currentUser();if(!u||!chWith){toast('Seleccione um contacto da equipa primeiro.','er');return;}
  if(!navigator.mediaDevices||!window.MediaRecorder){toast('Gravação de áudio não suportada neste navegador.','er');return;}
